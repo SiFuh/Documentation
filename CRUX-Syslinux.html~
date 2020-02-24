@@ -1,9 +1,8 @@
-<html><body>
 <h1>
     How to boot CRUX with Syslinux
 </h1>
 <p>
-<html><body>    Author: Lin SiFuh
+    Author: Lin SiFuh
 </p>
 <h1>
     Overview
@@ -628,4 +627,3 @@ the command <strong>syslinux</strong> for FAT systems or <strong>extlinux</stron
     above, even though UEFI does support DOS partition tables, some
     manufactures do not.
 </p>
-</body></html>
