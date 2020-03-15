@@ -1,6 +1,6 @@
 #!/bin/bash -
 #
-#    backup.sh - My backup script. If if screws up your system then you should
+#    backup.sh - My backup script. If it screws up your system then you should
 #    have backed up first.
 #
 #    Copyright (c) 2005 by Lin SiFuh
