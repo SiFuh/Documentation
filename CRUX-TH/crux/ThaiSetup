@@ -1,0 +1,134 @@
+#!/bin/sh
+#
+# CRUX package installation script
+# CRUX ชุดติดตั้ง script
+# Copyright (c) 2001-2002 by Per Liden <per@fukt.bth.se>
+# License: GNU General Public License (GPL)
+#
+
+tmpfile=/tmp/tmp.$$
+pkgfile=/tmp/packages.$$
+errfile=/tmp/error.$$
+trap "rm -f $tmpfile $pkgfile $errfile" 0 1 2 5 15
+
+DIALOG() {
+    dialog --backtitle "CRUX ชุดติดตั้ง" --no-shadow "$@"
+}
+
+ABORT() {
+    DIALOG --defaultno --yesno "ยกเลิกการติดตั้งหรือไม่" 5 40 && exit 1
+}
+
+#
+# ต้อนรับ
+#
+while true; do
+    DIALOG --yesno "ต้อนรับ\n\nสคริปการติดตั้งทั่วไปนี้ จะแนะนำคุณคิดถึงการติดตั้งชุดCRUX\n\nก่อนที่จะทำการติดตั้ง คุณต้องแน่ใจว่าได้อ่านและเข้าใจข้อแนะนำการติดตั้งCRUXก่อน  ถ้าคุณเข้าใจแล้วกรุณาดำเนินการต่อไป หรือยกเลิกการตั้งติดก่อน และทำการติดตั้งทีหลัง\n\nคุณแน่ใจที่จะติดดำเนินการต่อหรือไม่" 16 60
+    if [ $? != 0 ]; then
+       ABORT
+    else
+       break
+    fi
+done
+
+#
+# เลือกที่ที่คุณต้องการติดตั้ง
+#
+while true; do
+    DIALOG --inputbox "เลือกที่ที่คุณต้องการติดตั้ง (เช่น ไดเร็กตอรี่หรือพาททิชั่น ที่ต้องการเก็บ CRUX)" 9 60 "/mnt" 2> $tmpfile
+    if [ $? != 0 ]; then
+	ABORT
+    else
+	DESTDIR=`cat $tmpfile`
+	if [ -d "$DESTDIR" ]; then
+	    break
+	fi
+    fi
+done
+
+#
+# เลือกชุดข้อมูล
+#
+if [ ! -d base ] || [ ! -d opt ]; then
+    DIALOG --msgbox "แพคเกจไดเรคทอรี่ base และ/หรือ opt ไม่พบ ยกเลิกการติดตั้ง" 7 60
+    exit 1
+fi
+DIALOG --infobox "ค้นหาชุดข้อมูล...." 3 30
+BASE_LIST=`find base -name '*.pkg.tar.gz' -printf '%f (base) ON\n' | sed 's/.pkg.tar.gz/ /g' | sort | xargs echo ' '`
+OPT_LIST=`find opt -name '*.pkg.tar.gz' -printf '%f (optional) OFF\n' | sed 's/.pkg.tar.gz/ /' | sort | xargs echo ' '`
+while true; do
+    DIALOG --separate-output --checklist " เลือกชุดที่ต้องการติดตั้ง" 19 60 12 $BASE_LIST $OPT_LIST 2> $pkgfile
+    if [ $? != 0 ]; then
+	ABORT
+    else
+	break
+    fi
+done
+
+#
+# ยืนยัน
+#
+while true; do
+    DIALOG --yesno "เลือกชุดที่ต้องการแล้วการติดตั้งจะดำเนินต่อ $DESTDIR. ไป" 7 60
+    if [ $? != 0 ]; then
+	ABORT
+    else
+	break
+    fi
+done
+
+#
+# ชุดการติดตั้ง
+#
+if [ ! -d $DESTDIR/var/lib/pkg ]; then
+    mkdir -p $DESTDIR/var/lib/pkg
+    touch $DESTDIR/var/lib/pkg/db
+fi
+echo "การติดตั้งบันทึกข้อมูล" > $errfile
+echo "--------------------------------------------------------" >> $errfile
+(
+TOTAL=`cat $pkgfile | wc -l`
+let $((ERRORS=0))
+let $((COUNT=0))
+let $((TOTAL+=1))
+for FILE in `cat $pkgfile`; do
+    let $((COUNT+=1))
+    REAL_FILE=`find . -name "$FILE.pkg.tar.gz"`
+    echo "XXX"
+    expr $COUNT '*' 100 / $TOTAL
+    echo "\nกำลังติดตั้ง $FILE..."
+    echo "XXX"
+    echo "กำลังติดตั้ง $FILE" >> $errfile
+    (pkgadd --root $DESTDIR $REAL_FILE >> $errfile 2>&1) || let $((ERRORS+=1))
+done
+
+KERNEL=./kernel/linux-*.tar.bz2
+KERNEL_VERSION=`basename $KERNEL .tar.bz2 | sed "s/linux-//"`
+echo "XXX"
+expr $COUNT '*' 100 / $TOTAL
+echo "\nกำลังติดตั้ง `basename $KERNEL .tar.bz2`..."
+echo "XXX"
+tar -C $DESTDIR/usr/src -xjf $KERNEL
+chown -R root.root $DESTDIR/usr/src/linux
+mkdir -p $DESTDIR/lib/modules/$KERNEL_VERSION
+touch $DESTDIR/lib/modules/$KERNEL_VERSION/modules.dep
+
+echo "--------------------------------------------------------" >> $errfile
+echo "$ERRORS ค้นหาผิดพลาด" >> $errfile
+) | DIALOG --title "กรุณารอ..." --gauge "" 8 60 0
+
+#
+# ปรับปรุง ฐานข้อมูล และ ความจำ
+#
+if [ -x /sbin/ldconfig ]; then
+    /sbin/ldconfig -r $DESTDIR
+fi
+
+#
+# การติดตั้งบันทึกข้อมูล
+#
+DIALOG --textbox $errfile 19 60
+
+# สิ้นสุดข้อมูล
+
+
