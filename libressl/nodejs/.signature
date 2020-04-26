@@ -1,0 +1,5 @@
+untrusted comment: verify with /etc/ports/opt.pub
+RWSE3ohX2g5d/WvRF82eEy/g4Kk+N7H/5FagsGMUiXsF9bdlkwUEog9lKHiundJRSsrBw+01Be96XbsS5UQ12MFdRnV0yaCVdQg=
+SHA256 (Pkgfile) = c1bb1739b92210017950edb70ef162e088c2a577921bcc99cdbc0a220284ff82
+SHA256 (.footprint) = 4f44e94a1be308a837dd34524fbd01aa2884f9a2e0bcba5035e6fad300ca505c
+SHA256 (node-v12.16.1.tar.xz) = 0a95845ba02c46102b5671d0c5732460073f2d397488337e18d1fc30146d412d

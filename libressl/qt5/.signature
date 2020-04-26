@@ -1,0 +1,6 @@
+untrusted comment: verify with /etc/ports/opt.pub
+RWSE3ohX2g5d/YHniSBzM38EM2TXXhR1uCsw21iCELOMN09/RZ1vBuMWra1dU0AR1PXwnTvCCe0gDcWt2F3TcNi4FfrGF1nxOwU=
+SHA256 (Pkgfile) = a0b97bab515e8ffb451985fc1c4d46a3e6fe338caf201f2dee0747718ab8958a
+SHA256 (.footprint) = 096374fcbe6517602c41115147d73f1d171327e94eb708881a55eb31b3fd025a
+SHA256 (qt-everywhere-src-5.14.2.tar.xz) = c6fcd53c744df89e7d3223c02838a33309bd1c291fcb6f9341505fe99f7f19fa
+SHA256 (qt5-logo.png) = ae1335ecd1cd2d17032184895ab298a636cdfa8121b0ed71307c4f2b23ec928e

@@ -1,0 +1,35 @@
+--- vio/viosslfactories.c.orig	2020-04-27 00:12:41.440903839 +0800
++++ vio/viosslfactories.c	2020-04-27 00:15:46.046441791 +0800
+@@ -124,21 +124,20 @@
+   DH *dh;
+   if ((dh=DH_new()))
+   {
+-    BIGNUM *p= BN_bin2bn(dh2048_p, sizeof(dh2048_p), NULL);
+-    BIGNUM *g= BN_bin2bn(dh2048_g, sizeof(dh2048_g), NULL);
+-    if (!p || !g
+-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+-        || !DH_set0_pqg(dh, p, NULL, g)
+-#endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
+-    ) {
+-      /* DH_free() will free 'p' and 'g' at once. */
++    BIGNUM *p = BN_bin2bn(dh2048_p,sizeof(dh2048_p), NULL);
++    BIGNUM *g = BN_bin2bn(dh2048_g,sizeof(dh2048_g), NULL);
++#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
++    dh->p=p;
++    dh->g=g;
++    if (! dh->p || ! dh->g)
++#else
++    if (!DH_set0_pqg(dh, p, NULL, g))
++#endif
++    {
+       DH_free(dh);
+       return NULL;
++      dh = NULL;
+     }
+-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+-    dh->p= p;
+-    dh->g= g;
+-#endif /* OPENSSL_VERSION_NUMBER < 0x10100000L */
+   }
+   return(dh);
+ }

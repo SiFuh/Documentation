@@ -1,0 +1,79 @@
+--- a/cmake/ssl.cmake
++++ b/cmake/ssl.cmake
+@@ -186,7 +186,8 @@ MACRO (MYSQL_CHECK_SSL)
+         OPENSSL_FIX_VERSION "${OPENSSL_VERSION_NUMBER}"
+         )
+     ENDIF()
+-    IF("${OPENSSL_MAJOR_VERSION}.${OPENSSL_MINOR_VERSION}.${OPENSSL_FIX_VERSION}" VERSION_GREATER "1.1.0")
++    CHECK_SYMBOL_EXISTS(TLS1_3_VERSION "openssl/tls1.h" HAVE_TLS1_3_VERSION)
++    IF(HAVE_TLS1_3_VERSION)
+        ADD_DEFINITIONS(-DHAVE_TLSv13)
+        SET(HAVE_TLSv13 1)
+        IF(SOLARIS)
+@@ -196,7 +197,7 @@ MACRO (MYSQL_CHECK_SSL)
+     IF(OPENSSL_INCLUDE_DIR AND
+        OPENSSL_LIBRARY   AND
+        CRYPTO_LIBRARY      AND
+-       OPENSSL_MAJOR_VERSION STREQUAL "1"
++       OPENSSL_MAJOR_VERSION VERSION_GREATER_EQUAL "1"
+       )
+       SET(OPENSSL_FOUND TRUE)
+     ELSE()
+--- a/sql/auth/sha2_password_common.cc
++++ b/sql/auth/sha2_password_common.cc
+@@ -116,7 +116,8 @@ bool SHA256_digest::retrieve_digest(unsigned char *digest,
+     DBUG_RETURN(true);
+   }
+   m_ok= EVP_DigestFinal_ex(md_context, m_digest, NULL);
+-#if defined(HAVE_WOLFSSL) || OPENSSL_VERSION_NUMBER < 0x10100000L
++#if defined(HAVE_WOLFSSL) || OPENSSL_VERSION_NUMBER < 0x10100000L || \
++    (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x02090000fL)
+   EVP_MD_CTX_cleanup(md_context);
+ #else  /* OPENSSL_VERSION_NUMBER < 0x10100000L */
+   EVP_MD_CTX_reset(md_context);
+--- a/sql/mysqld.cc
++++ b/sql/mysqld.cc
+@@ -3419,7 +3419,7 @@ int warn_self_signed_ca()
+ static int init_ssl()
+ {
+ #ifdef HAVE_OPENSSL
+-#if OPENSSL_VERSION_NUMBER < 0x10100000L
++#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+   CRYPTO_malloc_init();
+ #else /* OPENSSL_VERSION_NUMBER < 0x10100000L */
+   OPENSSL_malloc_init();
+--- a/vio/viosslfactories.c
++++ b/vio/viosslfactories.c
+@@ -123,21 +123,19 @@ static DH *get_dh2048(void)
+   DH *dh;
+   if ((dh=DH_new()))
+   {
+-    BIGNUM *p= BN_bin2bn(dh2048_p, sizeof(dh2048_p), NULL);
+-    BIGNUM *g= BN_bin2bn(dh2048_g, sizeof(dh2048_g), NULL);
+-    if (!p || !g
+-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+-        || !DH_set0_pqg(dh, p, NULL, g)
+-#endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
+-    ) {
+-      /* DH_free() will free 'p' and 'g' at once. */
++    BIGNUM *p = BN_bin2bn(dh2048_p,sizeof(dh2048_p), NULL);
++    BIGNUM *g = BN_bin2bn(dh2048_g,sizeof(dh2048_g), NULL);
++#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
++    dh->p=p;
++    dh->g=g;
++    if (! dh->p || ! dh->g)
++#else
++    if (!DH_set0_pqg(dh, p, NULL, g))
++#endif
++    {
+       DH_free(dh);
+-      return NULL;
++      dh = NULL;
+     }
+-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+-    dh->p= p;
+-    dh->g= g;
+-#endif /* OPENSSL_VERSION_NUMBER < 0x10100000L */
+   }
+   return(dh);
+ }
