@@ -18,4 +18,4 @@ echo "make -j 8 modules_install && \\"
 echo "cp arch/x86/boot/bzImage /boot/vmlinuz-${KERNEL} && \\"
 echo "cp System.map /boot/System.map-${KERNEL} && \\"
 echo "cp .config /boot/config-${KERNEL}  && \\"
-echo "/usr/bin/dkms autoinstall -k ${KERNEL}
+echo "/usr/bin/dkms autoinstall -k ${KERNEL}"
