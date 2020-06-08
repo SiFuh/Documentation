@@ -27,8 +27,16 @@ dkms status | while read -r j ; do
     read -r -p "Run the command: 'dkms ${RED}${BOLD}remove${RESET} ${DKMS}' [y/N]? " PROMPT 0</dev/tty
     if [[ ! ${PROMPT} =~ ^([yY][eE][sS]|[yY])$ ]] ; then
       echo "Skipping..."
-    else
+    else  
       /usr/bin/dkms remove ${DKMS}
     fi
   fi
 done
+
+read -r -p "Would you like to list dkms status before exiting [y/N]?" PROMPT
+if [[ ! ${PROMPT} =~ ^([yY][eE][sS]|[yY])$ ]] ; then
+  :
+else
+  /usr/bin/dkms status
+fi
+
