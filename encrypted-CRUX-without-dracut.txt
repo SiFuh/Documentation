@@ -45,6 +45,53 @@ vi /etc/fstab
 /dev/dm-0 / ext4 defaults 0 1
 /dev/sda1 /boot vfat defaults 0 0
 
+vi /etc/rc.d/swap
+
+
+#!/bin/sh
+
+PROG="/usr/sbin/cryptsetup"
+SWAP="swap"
+CIPH="aes-cbc-essiv:sha256"
+PART="/dev/sda3"
+
+case $1 in
+start)
+  if [ -e /dev/mapper/swap ] ; then
+    if swapon --show | grep -qs partition ; then
+       exit 0
+     else
+      swapon /dev/mapper/${SWAP}
+      exit 0
+    fi
+  else
+    ${PROG} -q -c ${CIPH} -d /dev/urandom create ${SWAP} ${PART}
+    mkswap -f /dev/mapper/${SWAP}
+    swapon  /dev/mapper/${SWAP}
+    exit 0
+  fi
+  ;;
+stop)
+  swapoff -a
+  sleep 1
+  ${PROG} close /dev/mapper/${SWAP}
+  ;;
+status)
+  swapon --show
+  ;;
+*)
+  echo "usage: $0 [start|stop|status]"
+  ;;
+esac
+
+# End of file
+
+
+chmod +x /etc/rc.d/swap
+
+vi /etc/rc.conf
+SERVICES=(lo net crond swap)
+
 dmsetup table --concise --showkeys /dev/mapper/machupo
 
 Device Drivers --->
