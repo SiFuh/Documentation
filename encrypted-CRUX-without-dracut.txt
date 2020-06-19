@@ -114,4 +114,12 @@ mkdir /boot/syslinux
 cp /usr/share/syslinux/efi64/{syslinux.efi,ldlinux.e64} /boot/syslinux/
 vi /boot/syslinux/syslinux.cfg
 
+PROMPT 1
+TIMEOUT 100
+DEFAULT machupo
+
+  LABEL machupo
+  LINUX ../vmlinuz-5.4.31-1-yenjie
+  APPEND root=/dev/dm-0 rw
+
 reboot
