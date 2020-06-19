@@ -1,0 +1,104 @@
+###########################
+# THIS IS ONLY A TEST RUN #
+###########################
+
+parted -a optimal
+(parted) mklabel gpt
+(parted) mkpart primary fat32 0% 200M
+(parted) name 1 esp
+(parted) set 1 esp on
+(parted) mkpart primary ext4 200M -8G
+(parted) name 2 machupo
+(parted) mkpart primary linux-swap -8G 100%
+(parted) name 3 swap
+
+mkswap /dev/sda3
+swapon /dev/sda3
+
+mkdir /mnt2
+mkfs.vfat /dev/sda1
+mount /dev/sda1 /mnt2
+
+dd if=/dev/urandom of=/mnt2/mkey bs=1 count=4096
+cryptsetup -d /mnt2/mkey -c aes-xts-plain64 -s 512 --allow-discards create machupo /dev/sda2
+mkfs.ext4 -E discard /dev/mapper/machupo
+
+mount /dev/mapper/machupo /mnt/
+mkfs.ext4 /dev/mapper/machupo
+mount /dev/mapper/machupo /mnt
+
+mkdir /mnt/boot && umount /mnt2
+mount /dev/sda1 /mnt/boot
+
+setup
+
+> cryptsetup efibootmgr lvm2 syslinux
+
+setup-chroot
+
+> lz4
+
+passwd
+localedef -i en_US -f UTF-8 en_US.UTF-8
+
+vi /etc/fstab
+/dev/dm-0 / ext4 defaults 0 1
+/dev/sda1 /boot vfat defaults 0 0
+
+dmsetup table --concise --showkeys /dev/mapper/machupo
+
+Device Drivers --->
+[*] Multiple devices driver support (RAID and LVM)  --->
+ [*]   Device mapper support
+ [*]     Crypt target support
+ [*]     DM "dm-mod.create=" parameter support
+ 
+Processor type and features -->
+[*] Built-in kernel command line
+(dm-mod.create="machupo,,0,rw,0 88842240 crypt aes-xts-plain64 d4bd7f0f552d7c95ed4ff3df12bc84000ddcbc88c64416f0e292e9feccfd944de8ae012f63bf535211a73f8be9a37850a68b00191c1823fff4da267ec6d4ce52 0 8:2 0 1 allow_discards")
+
+make -j 4 all && make -j 4 modules_install
+cp arch/x86/boot/bzImage /boot/vmlinuz-5.4.31-yenjie
+cp .config /boot/config-5.4.31-yenjie
+cp System.map /boot/System.map-5.4.31-yenjie
+
+efibootmgr -c -d /dev/sda -p 1 -l \\syslinux\\syslinux.efi -L machupo -v
+mkdir /boot/syslinux
+cp /usr/share/syslinux/efi64/{syslinux.efi,ldlinux.e64} /boot/syslinux/
+vi /boot/syslinux/syslinux.cfg
+
+reboot
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
