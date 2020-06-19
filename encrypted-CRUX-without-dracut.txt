@@ -42,7 +42,7 @@ passwd
 localedef -i en_US -f UTF-8 en_US.UTF-8
 
 vi /etc/fstab
-/dev/dm-0 / ext4 defaults 0 1
+/dev/mapper/machupo / ext4 defaults 0 1
 /dev/sda1 /boot vfat defaults 0 0
 
 vi /etc/rc.d/swap
