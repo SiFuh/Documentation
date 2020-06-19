@@ -115,37 +115,3 @@ cp /usr/share/syslinux/efi64/{syslinux.efi,ldlinux.e64} /boot/syslinux/
 vi /boot/syslinux/syslinux.cfg
 
 reboot
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
