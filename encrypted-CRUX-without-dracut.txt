@@ -123,3 +123,7 @@ DEFAULT machupo
   APPEND root=/dev/dm-0 rw
 
 reboot
+
+dmesg | grep dm-mod.create 
+
+[    0.051501] Kernel command line: dm-mod.create="machupo,,0,rw,0 88842240 crypt aes-xts-plain64 d4bd7f0f552d7c95ed4ff3df12bc84000ddcbc88c64416f0e292e9feccfd944de8ae012f63bf535211a73f8be9a37850a68b00191c1823fff4da267ec6d4ce52 0 8:2 0 1 allow_discards" BOOT_IMAGE=../vmlinuz-5.4.31-1-yenjie root=/dev/dm-0 rw 
