@@ -2,10 +2,10 @@
 
 # Configure these options
 KERNEL_LOCATION="/boot/"
-DOWNLOAD_LOCATION="/admin/SiFuh/Downloads/"
+DOWNLOAD_LOCATION="/home/luser/Downloads/"
 
 # Only set this if you use CONFIG_LOCALVERSION in the kernel
-LOCALVERSION="-yenjie"
+LOCALVERSION=""
 
 # Color settings
 #BLACK=$(tput setaf 0)
