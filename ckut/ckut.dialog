@@ -11,33 +11,11 @@ KERNEL_OLD=$(uname -r)
 
 KERNEL="NOT SELECTED"
 
-
-
-
 for list in $(curl -s https://www.kernel.org | grep -Po 'href="\K.*?z(?=")' | \
   grep -v patch |sort -ur); do v=${list##*\x-} ; v=${v%%.tar*} ; \
   echo -n "$v $(printf ' %.0s' {0..10})" | head -c 10 ; echo " ${list}" ; done > ${TMP}/tmp.list
 
 . ${CONFIG}
-
-do_dialog() {
- dialog --backtitle "{$TITLE}" --no-shadow "$@"
-}
-
-do_abort() {
-  do_dialog --aspect 50 --defaultno --yesno "Abort installation?" 0 0 && exit 1
-}
-
-do_download() {
-  wget --progress=dot "${URL}" 2>&1 | grep "%" | sed -u -e "s,\.,,g" | awk '{print $2}' | \
-    sed -u -e "s,\%,,g" | dialog --gauge "Linux "${KERNEL}"" 10 100
-}
-
-do_extract() {
-  (pv -n "${DOWNLOAD_LOCATION}/linux-${KERNEL}.tar.xz" | \
-    tar -J -xf  - ) 2>&1 | \
-    dialog --title "File upgrade" --gauge "Please wait..." 10 70 0
-}
 
 main() {
 
@@ -71,8 +49,6 @@ main() {
       9) exit_kernel;;
     esac
   done
-
-#rm $TMPFILE
 
 }
 
@@ -190,9 +166,11 @@ install_kernel() {
 }
 
 exit_kernel() {
+
   trap "rm -f ${TMPFILE} ${TMP}/tmp.list" 0 1 2 5 15
   clear
   exit 0
+
 }
 
 main
