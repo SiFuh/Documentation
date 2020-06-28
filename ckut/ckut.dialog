@@ -1,14 +1,27 @@
 #!/bin/bash
-
+#
+#    ckut - a simple shell script for updating the linux kernel
+#
+#    Copyright (c) 2020 by Lin SiFuh
+#
+#    *************************************************************************
+#    *                                                                       *
+#    * This program is free software; you can redistribute it and/or modify  *
+#    * it under the terms of the GNU General Public License as published by  *
+#    * the Free Software Foundation; either version 2 of the License, or     *
+#    * (at your option) any later version.                                   *
+#    *                                                                       *
+#    *************************************************************************
+#
+#   **** USE AT YOUR OWN RISK ****
+#
 
 VERSION="v0.6"
 TITLE="CRUX Kernel Update Tool ${VERSION}"
-
 CONFIG="/etc/ckut.conf"
 TMP="/tmp"
 TMPFILE=$(mktemp)
 KERNEL_OLD=$(uname -r)
-
 KERNEL="NOT SELECTED"
 
 for list in $(curl -s https://www.kernel.org | grep -Po 'href="\K.*?z(?=")' | \
@@ -31,7 +44,8 @@ main() {
       6 "Menuconfig" \
       7 "Compile" \
       8 "Install" \
-      9 "Exit" 2> "${TMPFILE}"
+      9 "Syslinux" \
+      q "Exit" 2> "${TMPFILE}"
           
     [[ $? != 0 ]] && exit_kernel
 
@@ -46,9 +60,12 @@ main() {
       6) menuconfig_kernel;;
       7) compile_kernel;;
       8) install_kernel;;
-      9) exit_kernel;;
+      9) configure_syslinux;;
+      q) exit_kernel;;
     esac
   done
+
+#rm $TMPFILE
 
 }
 
@@ -152,13 +169,24 @@ install_kernel() {
 
   if [ -d "${DOWNLOAD_LOCATION}/linux-${KERNEL}" ]; then
     cd "/usr/src/linux-${KERNEL}" || return
-    dialog --backtitle "${TITLE}" --title "Copied files ..." --msgbox "$(echo "" && \
-      echo -n "${DOWNLOAD_LOCATION}/linux-${KERNEL}/" && \
-      cp -v arch/x86/boot/bzImage "${KERNEL_LOCATION}/vmlinuz-${KERNEL}${LOCALVERSION}" && \
-      echo -n "${DOWNLOAD_LOCATION}/linux-${KERNEL}/" && \
-      cp -v System.map "${KERNEL_LOCATION}/System.map-${KERNEL}${LOCALVERSION}" && \
-      echo -n "${DOWNLOAD_LOCATION}/linux-${KERNEL}/" && \
-      cp -v .config "${KERNEL_LOCATION}/config-${KERNEL}${LOCALVERSION}")" 10 100
+    dialog --backtitle "${TITLE}" --title "Copied files ..." --msgbox "$(echo -e "\nCopying files from $(pwd)\n" && \
+      cp -v arch/x86/boot/bzImage "${KERNEL_LOCATION}/vmlinuz-${KERNEL}${LOCALVERSION}" 2>"${TMP}/copy.log" || \
+      cat "${TMP}/copy.log" && \
+      cp -v System.map "${KERNEL_LOCATION}/System.map-${KERNEL}${LOCALVERSION}" 2>"${TMP}/copy.log" || \
+      cat "${TMP}/copy.log" && \
+      cp -v .config "${KERNEL_LOCATION}/config-${KERNEL}${LOCALVERSION}" 2>"${TMP}/copy.log" || \ 
+      cat "${TMP}/copy.log")" 13 100
+      rm "${TMP}/copy.log"
+  else
+    main
+  fi
+
+}
+
+configure_syslinux() {
+
+  if [ -f /boot/syslinux/syslinux.cfg ]; then
+    vim /boot/syslinux/syslinux.cfg
   else
     main
   fi
