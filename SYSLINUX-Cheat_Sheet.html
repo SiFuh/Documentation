@@ -1,0 +1,159 @@
+<html>
+  <head>
+    <style>
+      .grayText { font: 16px "Arial"; color: gray; }
+      .greenText { font: 16px "Courier New", monospace; color: green; }
+      .greenSText { font: 13px "Courier New", monospace; color: green; }
+      .greenSBText { font: 13px "Courier New", monospace; font-weight: bold; color: green; }
+      .greenBText { font-weight: bold; color: green; }
+      .blueText { font: 16px "Courier New", monospace; color: blue; }
+      .blueSText { font: 13px "Courier New", monospace; color: blue; }
+      .blueBText { font-weight: bold;color: blue; }
+      .blackSText { font: 13px "Courier New", monospace; color: black; }
+      td { border: 1px solid gray;  background-color: white; padding: 15px }
+      table { border: 1px solid gray; background-color: lightgray; }
+    </style>
+  </head>
+  <body>
+    <h2>
+      SYSLINUX configuration for CRUX Linux (Cheat Sheet)
+    </h2>
+    <p>
+      <span class="grayText">Author: Lin SiFuh</span>
+    </p>
+    <br/>
+    <p>
+      /dev/sda1 is already mounted as /boot and filesystem is vfat +500M
+    </p>
+    <p>
+      Anything in <span class="greenBText">Green</span> 
+      is specifically for <span class="greenBText">BIOS</span> 
+      and anything in <span class="blueBText">Blue</span> 
+      is specifically for <span class="blueBText">UEFI</span>
+    </p>
+    <br/>
+    <table style="width:100%">
+      <tr>
+        <th>
+        </th>
+        <th>
+          MBR
+        </th>
+        <th>
+          GPT (GUID)
+        </th>
+      </tr>
+      <tr>
+         <th style="width:1%">
+           <p>
+             <span class="greenBText">BIOS</span>
+           </p>
+         </th>
+         <td>
+           <p>
+             <span class="greenSBText">First partition must be set as bootable</span><br/>
+             <span class="blackSText"># mkdir -p /boot/EFI/BOOT/</span><br/>
+             <span class="blackSText"># cd /boot/EFI/BOOT/</span><br/>
+             <span class="greenSText"># cp /usr/share/syslinux/ldlinux.c32 .</span><br/>
+             <span class="blackSText"># vi syslinux.cfg</span><br/>
+             <span class="greenSText"># extlinux --install /boot/EFI/BOOT/</span><br/>
+             <span class="greenSText"># dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/mbr.bin of=/dev/sda</span><br/>
+           </p>
+         </td>
+         <td>
+           <p>
+             <span class="greenSBText">First partition must be set as bootable</span><br/>
+             <span class="blackSText"># mkdir -p /boot/EFI/BOOT/</span><br/>
+             <span class="blackSText"># cd /boot/EFI/BOOT/</span><br/>
+             <span class="greenSText"># cp /usr/share/syslinux/ldlinux.c32 .</span><br/>
+             <span class="blackSText"># vi syslinux.cfg</span><br/>
+             <span class="greenSText"># extlinux --install /boot/EFI/BOOT/</span><br/>
+             <span class="greenSText"># dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/gptmbr.bin of=/dev/sda</span><br/>
+           </p>
+         </td>
+      </tr>
+      <tr>
+        <th>
+          <p>
+            <span class="blueBText">UEFI</span>
+          </p>
+        </th>
+        <td>
+          <p>
+            <span class="blackSText"># mkdir -p /boot/EFI/BOOT/<br/>
+            <span class="blackSText"># cd /boot/EFI/BOOT/<br/>
+            <span class="blueSText"># cp /usr/share/syslinux/efi64/ldlinux.e64 .</span><br/>
+            <span class="blueSText"># cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI</span><br/>
+            <span class="blackSText"># vi syslinux.cfg<br/>
+          </p>
+        </td>
+        <td>
+          <p>
+            <span class="blackSText"># mkdir -p /boot/EFI/BOOT/<br/>
+            <span class="blackSText"># cd /boot/EFI/BOOT/<br/>
+            <span class="blueSText"># cp /usr/share/syslinux/efi64/ldlinux.e64 .</span><br/>
+            <span class="blueSText"># cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI</span><br/>
+            <span class="blackSText"># vi syslinux.cfg<br/>
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <th>
+          <p>
+            <span class="greenBText">BIOS</span> and <span class="blueBText">UEFI</span>
+          </p>
+        </th>
+        <td>
+          <p>
+            <span class="greenSBText">First partition must be set as bootable</span><br/>
+            <span class="blackSText"># mkdir -p /boot/EFI/BOOT/</span><br/>
+            <span class="blackSText"># cd /boot/EFI/BOOT/</span><br/>
+            <span class="greenSText"># cp /usr/share/syslinux/ldlinux.c32 .</span><br/>
+            <span class="blueSText"># cp /usr/share/syslinux/efi64/ldlinux.e64 .</span><br/>
+            <span class="blueSText"># cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI</span><br/>
+            <span class="blackSText"># vi syslinux.cfg</span></span><br/>
+            <span class="greenSText"># extlinux --install /boot/EFI/BOOT/</span><br/>
+            <span class="greenSText"># dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/mbr.bin of=/dev/sda</span><br/>
+          </p>
+        </td>
+        <td>
+          <p>
+            <span class="greenSBText">First partition must be set as bootable</span><br/>
+            <span class="blackSText"># mkdir -p /boot/EFI/BOOT/</span><br/>
+            <span class="blackSText"># cd /boot/EFI/BOOT/</span><br/>
+            <span class="greenSText"># cp /usr/share/syslinux/ldlinux.c32 .</span><br/>
+            <span class="blueSText"># cp /usr/share/syslinux/efi64/ldlinux.e64 .</span><br/>
+            <span class="blueSText"># cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI</span><br/>
+            <span class="blackSText"># vi syslinux.cfg</span><br/>
+            <span class="greenSText"># extlinux --install /boot/EFI/BOOT/</span><br/>
+            <span class="greenSText"># dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/gptmbr.bin of=/dev/sda</span><br/>
+          </p>
+        </td>
+     </tr>
+    </table>
+    <br/>
+    <p>
+       Optional only if you wish to modify the systems UEFI. By default UEFI 
+       looks for \EFI\BOOT\BOOTX64.EFI so if you have syslinux.efi in another 
+       location you will need to run the following command pointing to the 
+       location of syslinux.efi or what ever you named it.
+    </p>
+    <p>
+      <span class="blueText">
+        efibootmgr -c -d /dev/[DISK] -p [PARTITION NUMBER] -l 
+        \\[LOCATION]\\[TO]\\[SOME.EFI] -L [MENU LABEL] -v
+      </span>
+    </p>
+    <p>For the above scenario you would run</p>
+    <p>
+      <span class="blueText">
+        # efibootmgr -c -d /dev/sda -p 1 -l 
+        \\EFI\\BOOT\\BOOTX64.EFI -L CRUX -v
+      </span>
+    </p>
+    <p>
+      The kernel is copied into /boot/EFI/BOOT/ and syslinux.cfg edited 
+      appropriately
+    </p>
+  </body>
+</html>
