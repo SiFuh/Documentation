@@ -10,8 +10,11 @@
       .blueSText { font: 13px "Courier New", monospace; color: blue; }
       .blueBText { font-weight: bold;color: blue; }
       .blackSText { font: 13px "Courier New", monospace; color: black; }
-      td { border: 1px solid gray;  background-color: white; padding: 15px }
-      table { border: 1px solid gray; background-color: lightgray; }
+      .td1 { border: 1px solid gray;  background-color:  #fef9e7; padding: 15px }
+      .td2 { border: 1px solid gray;  background-color:  #fffcf1; padding: 15px }
+      .th1 { background-color: #EBE8E8; }
+      .th2 { background-color: #D7D4D3; }
+      table { border: 1px solid gray; }
     </style>
   </head>
   <body>
@@ -34,101 +37,101 @@
     <br/>
     <table style="width:100%">
       <tr>
-        <th>
+        <th class="th1">
         </th>
-        <th>
+        <th class="th2">
           MBR
         </th>
-        <th>
+        <th class="th1">
           GPT (GUID)
         </th>
       </tr>
       <tr>
-         <th style="width:1%">
-           <p>
-             <span class="greenBText">BIOS</span>
-           </p>
-         </th>
-         <td>
-           <p>
-             <span class="greenSBText">First partition must be set as bootable</span><br/>
-             <span class="blackSText"># mkdir -p /boot/EFI/BOOT/</span><br/>
-             <span class="blackSText"># cd /boot/EFI/BOOT/</span><br/>
-             <span class="greenSText"># cp /usr/share/syslinux/ldlinux.c32 .</span><br/>
-             <span class="blackSText"># vi syslinux.cfg</span><br/>
-             <span class="greenSText"># extlinux --install /boot/EFI/BOOT/</span><br/>
-             <span class="greenSText"># dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/<span class="greenSBText">mbr.bin</span> of=/dev/sda</span><br/>
-           </p>
-         </td>
-         <td>
-           <p>
-             <span class="greenSBText">First partition must be set as bootable</span><br/>
-             <span class="blackSText"># mkdir -p /boot/EFI/BOOT/</span><br/>
-             <span class="blackSText"># cd /boot/EFI/BOOT/</span><br/>
-             <span class="greenSText"># cp /usr/share/syslinux/ldlinux.c32 .</span><br/>
-             <span class="blackSText"># vi syslinux.cfg</span><br/>
-             <span class="greenSText"># extlinux --install /boot/EFI/BOOT/</span><br/>
-             <span class="greenSText"># dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/<span class="greenSBText">gptmbr.bin</span> of=/dev/sda</span><br/>
-           </p>
-         </td>
-      </tr>
-      <tr>
-        <th>
+        <th style="width:1%" class="th2">
           <p>
-            <span class="blueBText">UEFI</span>
+            <span class="greenBText">BIOS</span>
           </p>
         </th>
-        <td>
-          <p>
-            <span class="blackSText"># mkdir -p /boot/EFI/BOOT/<br/>
-            <span class="blackSText"># cd /boot/EFI/BOOT/<br/>
-            <span class="blueSText"># cp /usr/share/syslinux/efi64/ldlinux.e64 .</span><br/>
-            <span class="blueSText"># cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI</span><br/>
-            <span class="blackSText"># vi syslinux.cfg<br/>
-          </p>
-        </td>
-        <td>
-          <p>
-            <span class="blackSText"># mkdir -p /boot/EFI/BOOT/<br/>
-            <span class="blackSText"># cd /boot/EFI/BOOT/<br/>
-            <span class="blueSText"># cp /usr/share/syslinux/efi64/ldlinux.e64 .</span><br/>
-            <span class="blueSText"># cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI</span><br/>
-            <span class="blackSText"># vi syslinux.cfg<br/>
-          </p>
-        </td>
-      </tr>
-      <tr>
-        <th>
-          <p>
-            <span class="greenBText">BIOS</span> and <span class="blueBText">UEFI</span>
-          </p>
-        </th>
-        <td>
+        <td class="td2">
           <p>
             <span class="greenSBText">First partition must be set as bootable</span><br/>
             <span class="blackSText"># mkdir -p /boot/EFI/BOOT/</span><br/>
             <span class="blackSText"># cd /boot/EFI/BOOT/</span><br/>
             <span class="greenSText"># cp /usr/share/syslinux/ldlinux.c32 .</span><br/>
-            <span class="blueSText"># cp /usr/share/syslinux/efi64/ldlinux.e64 .</span><br/>
-            <span class="blueSText"># cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI</span><br/>
-            <span class="blackSText"># vi syslinux.cfg</span></span><br/>
+            <span class="blackSText"># vi syslinux.cfg</span><br/>
             <span class="greenSText"># extlinux --install /boot/EFI/BOOT/</span><br/>
             <span class="greenSText"># dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/<span class="greenSBText">mbr.bin</span> of=/dev/sda</span><br/>
           </p>
         </td>
-        <td>
+        <td class="td1">
           <p>
             <span class="greenSBText">First partition must be set as bootable</span><br/>
             <span class="blackSText"># mkdir -p /boot/EFI/BOOT/</span><br/>
             <span class="blackSText"># cd /boot/EFI/BOOT/</span><br/>
             <span class="greenSText"># cp /usr/share/syslinux/ldlinux.c32 .</span><br/>
-            <span class="blueSText"># cp /usr/share/syslinux/efi64/ldlinux.e64 .</span><br/>
-            <span class="blueSText"># cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI</span><br/>
             <span class="blackSText"># vi syslinux.cfg</span><br/>
             <span class="greenSText"># extlinux --install /boot/EFI/BOOT/</span><br/>
             <span class="greenSText"># dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/<span class="greenSBText">gptmbr.bin</span> of=/dev/sda</span><br/>
           </p>
         </td>
+     </tr>
+     <tr>
+       <th class="th1">
+         <p>
+           <span class="blueBText">UEFI</span>
+         </p>
+       </th>
+       <td class="td1">
+         <p>
+           <span class="blackSText"># mkdir -p /boot/EFI/BOOT/<br/>
+           <span class="blackSText"># cd /boot/EFI/BOOT/<br/>
+           <span class="blueSText"># cp /usr/share/syslinux/efi64/ldlinux.e64 .</span><br/>
+           <span class="blueSText"># cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI</span><br/>
+           <span class="blackSText"># vi syslinux.cfg<br/>
+         </p>
+       </td>
+       <td class=td2>
+         <p>
+           <span class="blackSText"># mkdir -p /boot/EFI/BOOT/<br/>
+           <span class="blackSText"># cd /boot/EFI/BOOT/<br/>
+           <span class="blueSText"># cp /usr/share/syslinux/efi64/ldlinux.e64 .</span><br/>
+           <span class="blueSText"># cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI</span><br/>
+           <span class="blackSText"># vi syslinux.cfg<br/>
+         </p>
+       </td>
+     </tr>
+     <tr>
+       <th class="th2">
+         <p>
+           <span class="greenBText">BIOS</span> and <span class="blueBText">UEFI</span>
+         </p>
+       </th>
+       <td class="td2">
+         <p>
+           <span class="greenSBText">First partition must be set as bootable</span><br/>
+           <span class="blackSText"># mkdir -p /boot/EFI/BOOT/</span><br/>
+           <span class="blackSText"># cd /boot/EFI/BOOT/</span><br/>
+           <span class="greenSText"># cp /usr/share/syslinux/ldlinux.c32 .</span><br/>
+           <span class="blueSText"># cp /usr/share/syslinux/efi64/ldlinux.e64 .</span><br/>
+           <span class="blueSText"># cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI</span><br/>
+           <span class="blackSText"># vi syslinux.cfg</span></span><br/>
+           <span class="greenSText"># extlinux --install /boot/EFI/BOOT/</span><br/>
+           <span class="greenSText"># dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/<span class="greenSBText">mbr.bin</span> of=/dev/sda</span><br/>
+         </p>
+       </td>
+       <td class=td1>
+         <p>
+           <span class="greenSBText">First partition must be set as bootable</span><br/>
+           <span class="blackSText"># mkdir -p /boot/EFI/BOOT/</span><br/>
+           <span class="blackSText"># cd /boot/EFI/BOOT/</span><br/>
+           <span class="greenSText"># cp /usr/share/syslinux/ldlinux.c32 .</span><br/>
+           <span class="blueSText"># cp /usr/share/syslinux/efi64/ldlinux.e64 .</span><br/>
+           <span class="blueSText"># cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI</span><br/>
+           <span class="blackSText"># vi syslinux.cfg</span><br/>
+           <span class="greenSText"># extlinux --install /boot/EFI/BOOT/</span><br/>
+           <span class="greenSText"># dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/<span class="greenSBText">gptmbr.bin</span> of=/dev/sda</span><br/>
+         </p>
+       </td>
      </tr>
     </table>
     <br/>
