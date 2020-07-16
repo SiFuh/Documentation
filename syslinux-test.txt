@@ -1,5 +1,7 @@
-#!/bin/bash
 
+###############################################################################
+
+# /dev/sda1 is already mounted as /boot and filesystem is vfat +500M
 
 ###############################################################################
 
@@ -29,7 +31,6 @@ cd /boot/EFI/BOOT/
 cp /usr/share/syslinux/efi64/ldlinux.e64 .
 cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI
 vi syslinux.cfg
-dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/mbr.bin of=/dev/sda
 
 # GPT DISK (UEFI ONLY)
 mkdir -p /boot/EFI/BOOT/
@@ -37,7 +38,6 @@ cd /boot/EFI/BOOT/
 cp /usr/share/syslinux/efi64/ldlinux.e64 .
 cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI
 vi syslinux.cfg
-dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/gptmbr.bin of=/dev/sda
 
 ###############################################################################
 
