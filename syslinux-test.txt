@@ -1,0 +1,78 @@
+#!/bin/bash
+
+
+###############################################################################
+
+# MBR DISK (BIOS ONLY)
+# First partition must be set as bootable
+mkdir -p /boot/EFI/BOOT/
+cd /boot/EFI/BOOT/
+cp /usr/share/syslinux/ldlinux.c32 .
+vi syslinux.cfg
+extlinux --install /boot/EFI/BOOT/
+dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/mbr.bin of=/dev/sda
+
+# GPT DISK (BIOS ONLY)
+# First partition must be set as bootable
+mkdir -p /boot/EFI/BOOT/
+cd /boot/EFI/BOOT/
+cp /usr/share/syslinux/ldlinux.c32 .
+vi syslinux.cfg
+extlinux --install /boot/EFI/BOOT/
+dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/gptmbr.bin of=/dev/sda
+
+###############################################################################
+
+# MBR DISK (UEFI ONLY)
+mkdir -p /boot/EFI/BOOT/
+cd /boot/EFI/BOOT/
+cp /usr/share/syslinux/efi64/ldlinux.e64 .
+cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI
+vi syslinux.cfg
+dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/mbr.bin of=/dev/sda
+
+# GPT DISK (UEFI ONLY)
+mkdir -p /boot/EFI/BOOT/
+cd /boot/EFI/BOOT/
+cp /usr/share/syslinux/efi64/ldlinux.e64 .
+cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI
+vi syslinux.cfg
+dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/gptmbr.bin of=/dev/sda
+
+###############################################################################
+
+# MBR DISK (BIOS and UEFI)
+# First partition must be set as bootable
+mkdir -p /boot/EFI/BOOT/
+cd /boot/EFI/BOOT/
+cp /usr/share/syslinux/ldlinux.c32 .
+cp /usr/share/syslinux/efi64/ldlinux.e64 .
+cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI
+vi syslinux.cfg
+extlinux --install /boot/EFI/BOOT/
+dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/mbr.bin of=/dev/sda
+
+# GPT DISK (BIOS and UEFI)
+# First partition must be set as bootable
+mkdir -p /boot/EFI/BOOT/
+cd /boot/EFI/BOOT/
+cp /usr/share/syslinux/ldlinux.c32 .
+cp /usr/share/syslinux/efi64/ldlinux.e64 .
+cp /usr/share/syslinux/efi64/syslinux.efi BOOTX64.EFI
+vi syslinux.cfg
+extlinux --install /boot/EFI/BOOT/
+dd bs=440 count=1 conv=notrunc if=/usr/share/syslinux/gptmbr.bin of=/dev/sda
+
+###############################################################################
+
+# Optional only if you wish to modify the systems UEFI 
+# By default UEFI looks for \EFI\BOOT\BOOTX64.EFI
+# So if you have syslinux.efi in another location you will
+# need to run the following command pointing to the 
+# location of syslinux.efi or what ever you named it.
+
+# efibootmgr -c -d /dev/<DISK> -p <PARTITION NUMBER> -l \\<LOCATION>\\<TO>\\<SOME.EFI>> -L <MENU LABEL> -v
+
+efibootmgr -c -d /dev/sda -p 1 -l \\EFI\\BOOT\\BOOTX64.EFI -L CRUX -v
+
+# I copied the kernel to /boot/EFI/BOOT/ and edited syslinux.cfg 
