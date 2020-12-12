@@ -1,0 +1,142 @@
+# crux-3.6.iso needs a kernel with CONFIG_CRYTPO_USER_API_SKCIPHER set for serpent cipher
+# extra packages lz4 for my kernel compression
+# dracut and lvm2 needed to access the logical volumes when booting
+
+parted -s -a optimal /dev/sda         \
+       mklabel gpt                    \
+       mkpart primary fat32 0% 500MiB \
+       name 1 esp                     \
+       set 1 esp on                   \
+       mkpart primary 500MiB 4GiB     \
+       name 2 swap                    \
+       mkpart primary 4GiB 100%       \
+       name 3 ENCRYPTED
+
+mkfs.vfat /dev/sda1
+
+cryptsetup -q -c aes-cbc-essiv:sha256 -d /dev/urandom create swap /dev/sda2
+mkswap -f /dev/mapper/swap
+swapon  /dev/mapper/swap
+
+cryptsetup luksFormat --type luks2 -c serpent-xts-plain64 -s 512 /dev/sda3
+cryptsetup luksOpen /dev/sda3 ENCRYPTED
+
+pvcreate /dev/mapper/ENCRYPTED
+
+vgcreate ENCRYPTED /dev/mapper/ENCRYPTED
+
+lvcreate -L 30G ENCRYPTED -n root
+lvcreate -L  4G ENCRYPTED -n var
+lvcreate -L 50G ENCRYPTED -n usr
+lvcreate -L  3G ENCRYPTED -n opt
+lvcreate -l 100%FREE ENCRYPTED -n home
+
+mkfs.f2fs /dev/mapper/ENCRYPTED-root
+mkfs.f2fs /dev/mapper/ENCRYPTED-var
+mkfs.f2fs /dev/mapper/ENCRYPTED-usr
+mkfs.f2fs /dev/mapper/ENCRYPTED-opt
+mkfs.f2fs /dev/mapper/ENCRYPTED-home
+
+mount /dev/mapper/ENCRYPTED-root  /mnt
+
+mkdir /mnt/{var,usr,opt,home,boot}
+
+mount /dev/mapper/ENCRYPTED-var   /mnt/var
+mount /dev/mapper/ENCRYPTED-usr   /mnt/usr
+mount /dev/mapper/ENCRYPTED-opt   /mnt/opt
+mount /dev/mapper/ENCRYPTED-home  /mnt/home
+mount /dev/sda1                   /mnt/boot
+
+mkdir -p /mnt/boot/efi/boot
+
+setup # --> Install these extra packages (cryptsetup lvm2 syslinux dracut lz4)
+
+setup-chroot
+passwd
+localedef -i en_US -f UTF-8 en_US.UTF-8
+
+vi /etc/fstab 
+
+  /dev/mapper/ENCRYPTED-root  /      f2fs defaults 0 0
+  #/dev/mapper/swap            swap   swap defaults 0 0
+  /dev/sda1                   /boot  vfat defaults 0 0
+  /dev/mapper/ENCRYPTED-var   /var   f2fs defaults 0 0
+  /dev/mapper/ENCRYPTED-usr   /usr   f2fs defaults 0 0
+  /dev/mapper/ENCRYPTED-opt   /opt   f2fs defaults 0 0
+  /dev/mapper/ENCRYPTED-home  /home  f2fs defaults 0 0
+
+vi /etc/rc.d/swap
+
+  #!/bin/sh
+
+  PROG="/usr/sbin/cryptsetup"
+  SWAP="swap"
+  CIPH="aes-cbc-essiv:sha256"
+  PART="/dev/sda2"
+
+  case $1 in
+  start)
+    if [ -e /dev/mapper/swap ] ; then
+      if swapon --show | grep -qs partition ; then
+         exit 0
+       else
+        swapon /dev/mapper/${SWAP}
+        exit 0
+      fi
+    else
+      ${PROG} -q -c ${CIPH} -d /dev/urandom create ${SWAP} ${PART}
+      mkswap -f /dev/mapper/${SWAP}
+      swapon  /dev/mapper/${SWAP}
+      exit 0
+    fi
+    ;;
+  stop)
+    swapoff -a
+    sleep 1
+    ${PROG} close /dev/mapper/${SWAP}
+    ;;
+  status)
+    swapon --show
+    ;;
+  *)
+    echo "usage: $0 [start|stop|status]"
+    ;;
+  esac
+
+  # End of file
+
+chmod +x /etc/rc.d/swap
+
+vi /etc/rc.conf
+
+  SERVICES=(lo net crond swap)
+
+vi /etc/rc.d/net
+
+vi /etc/dracut.conf.d/modules.conf
+
+  add_dracutmodules+=" crypt lvm "
+
+cd /usr/src/linux-5.4.80
+make menuconfig
+make all && make modules_install
+cp bzImage /boot/efi/boot/vmlinuz-5.4.80
+cp System.map /boot/efi/boot/System.map-5.4.80
+cp .config /boot/efi/boot/config-5.4.80
+
+dracut --kvern 5.4.80
+mv /boot/initramfs-5.4.80 /boot/efi/boot/
+
+cp /usr/share/syslinux/efi64/syslinux.efi /boot/efi/boot/bootx64.efi
+cp /usr/share/syslinux/efi64/ldlinux.e64 /boot/efi/boot
+
+vi /boot/efi/boot/syslinux.cfg
+
+  PROMPT  1
+  TIMEOUT 10
+  DEFAULT CRUX
+
+    LABEL  CRUX
+    LINUX  vmlinuz-5.4.31
+    APPEND root=/dev/mapper/ENCRYPTED-root rw resume=/dev/mapper/ENCRYPTED-swap rd.auto=1 
+    INITRD initramfs-5.4.80
