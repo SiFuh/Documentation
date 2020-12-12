@@ -125,7 +125,7 @@ cp System.map /boot/efi/boot/System.map-5.4.80
 cp .config /boot/efi/boot/config-5.4.80
 
 dracut --kvern 5.4.80
-mv /boot/initramfs-5.4.80 /boot/efi/boot/
+mv /boot/initramfs-5.4.80.img /boot/efi/boot/
 
 cp /usr/share/syslinux/efi64/syslinux.efi /boot/efi/boot/bootx64.efi
 cp /usr/share/syslinux/efi64/ldlinux.e64 /boot/efi/boot
@@ -139,4 +139,4 @@ vi /boot/efi/boot/syslinux.cfg
     LABEL  CRUX
     LINUX  vmlinuz-5.4.31
     APPEND root=/dev/mapper/ENCRYPTED-root rw resume=/dev/mapper/ENCRYPTED-swap rd.auto=1 
-    INITRD initramfs-5.4.80
+    INITRD initramfs-5.4.80.img
