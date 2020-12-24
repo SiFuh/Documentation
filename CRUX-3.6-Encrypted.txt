@@ -138,5 +138,5 @@ vi /boot/efi/boot/syslinux.cfg
 
     LABEL  CRUX
     LINUX  vmlinuz-5.4.31
-    APPEND root=/dev/mapper/ENCRYPTED-root rw resume=/dev/mapper/ENCRYPTED-swap rd.auto=1 
+    APPEND root=/dev/mapper/ENCRYPTED-root rw resume=/dev/mapper/swap rd.auto=1 
     INITRD initramfs-5.4.80.img
