@@ -1,0 +1,71 @@
+diff -ruN a/pkgutils-5.40.7/pkgmk.8.in b/pkgutils-5.40.7/pkgmk.8.in
+--- a/pkgutils-5.40.7/pkgmk.8.in	2018-02-15 00:17:57.000000000 +0800
++++ b/pkgutils-5.40.7/pkgmk.8.in	2020-12-28 00:55:25.119453684 +0800
+@@ -115,6 +115,9 @@
+ .B "curl"
+ Used by pkgmk to download source code.
+ .TP
++.B "aria2c"
++Used by pkgmk to download source code.
++.TP
+ .B "wget"
+ Used by pkgmk to download source code.
+ .SH EXIT CODES
+@@ -149,7 +152,7 @@
+ .B 9
+ An error occured while installing the package via pkgadd.
+ .SH SEE ALSO
+-pkgmk.conf(5), pkgadd(8), pkgrm(8), pkginfo(8), rejmerge(8), signify(1), curl(1), wget(1)
++pkgmk.conf(5), pkgadd(8), pkgrm(8), pkginfo(8), rejmerge(8), signify(1), curl(1), aria2c(1), wget(1)
+ .SH COPYRIGHT
+ pkgmk (pkgutils) is Copyright (c) 2000-2005 Per Liden and Copyright (c) 2006-2017 CRUX team (http://crux.nu).
+ pkgmk (pkgutils) is licensed through the GNU General Public License.
+diff -ruN a/pkgutils-5.40.7/pkgmk.conf b/pkgutils-5.40.7/pkgmk.conf
+--- a/pkgutils-5.40.7/pkgmk.conf	2018-02-15 00:17:57.000000000 +0800
++++ b/pkgutils-5.40.7/pkgmk.conf	2020-12-28 02:11:14.633004092 +0800
+@@ -36,6 +36,7 @@
+ # PKGMK_DOWNLOAD_PROG="wget"
+ # PKGMK_WGET_OPTS=""
+ # PKGMK_CURL_OPTS=""
++# PKGMK_ARIA2C_OPTS=""
+ # PKGMK_COMPRESSION_MODE="gz"
+ 
+ # End of file
+diff -ruN a/pkgutils-5.40.7/pkgmk.conf.5.in b/pkgutils-5.40.7/pkgmk.conf.5.in
+--- a/pkgutils-5.40.7/pkgmk.conf.5.in	2018-02-15 00:17:57.000000000 +0800
++++ b/pkgutils-5.40.7/pkgmk.conf.5.in	2020-12-28 00:54:08.335448172 +0800
+@@ -50,7 +50,7 @@
+ Default: '\fBfoo\fP/work', where \fBfoo\fP is the directory of the Pkgfile.
+ .TP
+ \fBPKGMK_DOWNLOAD_PROG='STRING'\fP
+-Use specified program to download source archives. Valid strings are curl and wget.
++Use specified program to download source archives. Valid strings are curl aria2c and wget.
+ .br
+ Default: 'wget'
+ .br
+@@ -59,6 +59,10 @@
+ Additional options for curl(1), which is used by pkgmk to download all files.
+ .br
+ .TP
++\fBPKGMK_ARIA2C_OPTS='STRING'\fP
++Additional options for aria2c(1), which is used by pkgmk to download all files.
++.br
++.TP
+ \fBPKGMK_WGET_OPTS='STRING'\fP
+ Additional options for wget(1), which is used by pkgmk to download all files.
+ .br
+diff -ruN a/pkgutils-5.40.7/pkgmk.in b/pkgutils-5.40.7/pkgmk.in
+--- a/pkgutils-5.40.7/pkgmk.in	2018-02-15 00:17:57.000000000 +0800
++++ b/pkgutils-5.40.7/pkgmk.in	2020-12-28 02:14:29.587249719 +0800
+@@ -118,6 +118,11 @@
+ 	LOCAL_FILENAME_PARTIAL="$LOCAL_FILENAME.partial"
+ 
+ 	case ${PKGMK_DOWNLOAD_PROG} in
++    aria2c)
++      RESUME_CMD="-c"
++      DOWNLOAD_OPTS="--connect-timeout=10 --max-tries=3 --retry-wait=3 \
++      -d $PKGMK_SOURCE_DIR -o ${LOCAL_FILENAME_PARTIAL##*/} $PKGMK_ARIA2C_OPTS"
++      ;; 
+ 		curl)
+ 			RESUME_CMD="-C -"
+ 			DOWNLOAD_OPTS="-L --fail --ftp-pasv --retry 3 --retry-delay 3 \
