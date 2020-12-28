@@ -61,11 +61,11 @@ diff -ruN a/pkgutils-5.40.7/pkgmk.in b/pkgutils-5.40.7/pkgmk.in
  	LOCAL_FILENAME_PARTIAL="$LOCAL_FILENAME.partial"
  
  	case ${PKGMK_DOWNLOAD_PROG} in
-+    aria2c)
-+      RESUME_CMD="-c"
-+      DOWNLOAD_OPTS="--connect-timeout=10 --max-tries=3 --retry-wait=3 \
-+      -d $PKGMK_SOURCE_DIR -o ${LOCAL_FILENAME_PARTIAL##*/} $PKGMK_ARIA2C_OPTS"
-+      ;; 
++		aria2c)
++			RESUME_CMD="-c"
++			DOWNLOAD_OPTS="--connect-timeout=10 --max-tries=3 --retry-wait=3 \
++			-d $PKGMK_SOURCE_DIR -o ${LOCAL_FILENAME_PARTIAL##*/} $PKGMK_ARIA2C_OPTS"
++			;;
  		curl)
  			RESUME_CMD="-C -"
  			DOWNLOAD_OPTS="-L --fail --ftp-pasv --retry 3 --retry-delay 3 \
