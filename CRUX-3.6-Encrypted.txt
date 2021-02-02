@@ -109,7 +109,7 @@ chmod +x /etc/rc.d/swap
 
 vi /etc/rc.conf
 
-  SERVICES=(lo net crond swap)
+  SERVICES=(swap lo net crond)
 
 vi /etc/rc.d/net
 
@@ -137,6 +137,6 @@ vi /boot/efi/boot/syslinux.cfg
   DEFAULT CRUX
 
     LABEL  CRUX
-    LINUX  vmlinuz-5.4.31
+    LINUX  vmlinuz-5.4.80
     APPEND root=/dev/mapper/ENCRYPTED-root rw rd.auto=1 
     INITRD initramfs-5.4.80.img
