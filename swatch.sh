@@ -33,7 +33,7 @@ main_t() {
 
 }
 
-main_b(){
+main_b() {
 
   Z="${TIMEZONE//UTC}"
   if [[ "${Z}" -gt "0" ]]; then
@@ -75,7 +75,7 @@ swatch_options() {
 
 }
 
-swatch_check_t(){
+swatch_check_t() {
 
   if [[ "${#T}" -gt "5" ]] ; then
     swatch_usage
@@ -93,7 +93,7 @@ swatch_check_t(){
 
 }
 
-swatch_check_b(){
+swatch_check_b() {
 
   if [[ "${B}" != ?(-)+([0-9]) ]]; then
     swatch_usage
