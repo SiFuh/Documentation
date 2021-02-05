@@ -37,7 +37,7 @@ main_b(){
 
   Z="${TIMEZONE//UTC}"
   if [[ "${Z}" -gt "0" ]]; then
-    Z="${Z#?}" Z=$(echo "${Z}-1"|bc) Z=-${Z}
+    Z="${Z#?}" Z=$(echo "${Z}-1"|bc) Z=-"${Z}"
   else
     if [[ "${Z}" = "-0" ]] || [[ "${Z}" = "+0" ]]; then
       Z="${Z#?}" Z=$(echo "${Z}+1"|bc) Z="+${Z}"
