@@ -110,6 +110,7 @@ swatch_check_b() {
       swatch_usage
     fi
   fi
+
 }
 
 swatch_options "${@}" 
