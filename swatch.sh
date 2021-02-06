@@ -28,7 +28,7 @@ main_t() {
   fi
   export TZ="UTC-1"
   read -r UH UM <<<"$(date --date='TZ="'${Z}'" '"${T}"'' +"%H %M";unset TZ)"
-  R=$(echo "((${UH}*3600)+(${UM}*60))/86.4"|bc)
+  R=$(echo "((${UH}*3600)+(${UM}*60))/86.4"|bc -l)
   echo "${T} ${TIMEZONE} = @${R}"
 
 }
@@ -37,7 +37,7 @@ main_b() {
 
   Z="${TIMEZONE//UTC}"
   if [[ "${Z}" -gt "0" ]]; then
-    Z="${Z#?}" Z=$(echo "${Z}-1"|bc) Z=-"${Z}"
+    Z="${Z#?}" Z=$(echo "${Z}-1"|bc) Z="-${Z}"
   else
     if [[ "${Z}" = "-0" ]] || [[ "${Z}" = "+0" ]]; then
       Z="${Z#?}" Z=$(echo "${Z}+1"|bc) Z="+${Z}"
@@ -95,17 +95,19 @@ swatch_check_t() {
 
 swatch_check_b() {
 
-  if [[ "${B}" != ?(-)+([0-9]) ]]; then
-    swatch_usage
+  if [[ "${B%.*}" =~ "0" ]];then
+    B="0"
+    main_b
   else
-    if [[ "${B}" -gt "1000" ]]; then
-      swatch_usage
-    else
-      if [[ "${B}" -lt "0" ]]; then
+    regexp='^[0-9|.][.0-9]*$';test
+    if expr match "${B}" "\($regexp\)" &> /dev/null ; then
+      if [[ "${B%.*}" -gt "1000" ]]; then
         swatch_usage
       else
         main_b
       fi
+    else
+      swatch_usage
     fi
   fi
 }
