@@ -1,0 +1,797 @@
+diff -ru a/qtwebkit-opensource-src-5.212/CMakeLists.txt b/qtwebkit-opensource-src-5.212/CMakeLists.txt
+--- a/qtwebkit-opensource-src-5.212/CMakeLists.txt	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/CMakeLists.txt	2020-04-13 22:51:51.000000000 +0000
+@@ -83,8 +83,6 @@
+     set(WTF_CPU_S390 1)
+ elseif (LOWERCASE_CMAKE_SYSTEM_PROCESSOR MATCHES "s390x")
+     set(WTF_CPU_S390X 1)
+-elseif (LOWERCASE_CMAKE_SYSTEM_PROCESSOR MATCHES "riscv64")
+-    set(WTF_CPU_RISCV64 1)
+ else ()
+     message(FATAL_ERROR "Unknown CPU '${LOWERCASE_CMAKE_SYSTEM_PROCESSOR}'")
+ endif ()
+diff -ru a/qtwebkit-opensource-src-5.212/Source/JavaScriptCore/CMakeLists.txt b/qtwebkit-opensource-src-5.212/Source/JavaScriptCore/CMakeLists.txt
+--- a/qtwebkit-opensource-src-5.212/Source/JavaScriptCore/CMakeLists.txt	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Source/JavaScriptCore/CMakeLists.txt	2020-04-13 22:51:51.000000000 +0000
+@@ -1287,7 +1287,6 @@
+ elseif (WTF_CPU_S390X)
+ elseif (WTF_CPU_MIPS)
+ elseif (WTF_CPU_SH4)
+-elseif (WTF_CPU_RISCV64)
+ elseif (WTF_CPU_X86)
+ elseif (WTF_CPU_X86_64)
+     if (MSVC AND ENABLE_JIT)
+diff -ru a/qtwebkit-opensource-src-5.212/Source/JavaScriptCore/Scripts/generate-js-builtins.py b/qtwebkit-opensource-src-5.212/Source/JavaScriptCore/Scripts/generate-js-builtins.py
+--- a/qtwebkit-opensource-src-5.212/Source/JavaScriptCore/Scripts/generate-js-builtins.py	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Source/JavaScriptCore/Scripts/generate-js-builtins.py	2020-04-13 22:51:51.000000000 +0000
+@@ -124,7 +124,7 @@
+     cli_parser.add_option("-t", "--test", action="store_true", help="Enable test mode.")
+ 
+     arg_options, arg_values = cli_parser.parse_args()
+-    if len(arg_values) == 0 and not arg_options.input_directory:
++    if len(arg_values) is 0 and not arg_options.input_directory:
+         raise ParseException("At least one input file or directory expected.")
+ 
+     if not arg_options.output_directory:
+diff -ru a/qtwebkit-opensource-src-5.212/Source/JavaScriptCore/generate-bytecode-files b/qtwebkit-opensource-src-5.212/Source/JavaScriptCore/generate-bytecode-files
+--- a/qtwebkit-opensource-src-5.212/Source/JavaScriptCore/generate-bytecode-files	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Source/JavaScriptCore/generate-bytecode-files	2020-04-13 22:51:51.000000000 +0000
+@@ -163,7 +163,7 @@
+         initBytecodesFile = openOrExit(initASMFileName, "w")
+ 
+     try:
+-        bytecodeSections = json.load(bytecodeFile)
++        bytecodeSections = json.load(bytecodeFile, encoding = "utf-8")
+     except:
+         print("Unexpected error parsing {0}: {1}".format(bytecodeJSONFile, sys.exc_info()))
+ 
+diff -ru a/qtwebkit-opensource-src-5.212/Source/JavaScriptCore/parser/Parser.cpp b/qtwebkit-opensource-src-5.212/Source/JavaScriptCore/parser/Parser.cpp
+--- a/qtwebkit-opensource-src-5.212/Source/JavaScriptCore/parser/Parser.cpp	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Source/JavaScriptCore/parser/Parser.cpp	2020-04-13 22:51:51.000000000 +0000
+@@ -1089,10 +1089,6 @@
+     JSTokenLocation location(tokenLocation());
+     int startLine = tokenLine();
+     next();
+-
+-    DepthManager statementDepth(&m_statementDepth);
+-    m_statementDepth++;
+-
+     handleProductionOrFail(OPENPAREN, "(", "start", "for-loop header");
+     int nonLHSCount = m_parserState.nonLHSCount;
+     int declarations = 0;
+diff -ru a/qtwebkit-opensource-src-5.212/Source/WTF/wtf/Platform.h b/qtwebkit-opensource-src-5.212/Source/WTF/wtf/Platform.h
+--- a/qtwebkit-opensource-src-5.212/Source/WTF/wtf/Platform.h	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Source/WTF/wtf/Platform.h	2020-04-13 22:51:51.000000000 +0000
+@@ -176,11 +176,6 @@
+ #define WTF_CPU_X86_SSE2 1
+ #endif
+ 
+-/* CPU(RISCV64) - RISCV64 */
+-#if defined(__riscv) && defined(__riscv_xlen) && __riscv_xlen == 64
+-#define WTF_CPU_RISCV64 1
+-#endif
+-
+ /* CPU(ARM64) - Apple */
+ #if (defined(__arm64__) && defined(__APPLE__)) || defined(__aarch64__)
+ #define WTF_CPU_ARM64 1
+@@ -712,8 +707,7 @@
+     || CPU(S390X) \
+     || CPU(MIPS64) \
+     || CPU(PPC64) \
+-    || CPU(PPC64LE) \
+-    || CPU(RISCV64)
++    || CPU(PPC64LE)
+ #define USE_JSVALUE64 1
+ #else
+ #define USE_JSVALUE32_64 1
+diff -ru a/qtwebkit-opensource-src-5.212/Source/WTF/wtf/dtoa/utils.h b/qtwebkit-opensource-src-5.212/Source/WTF/wtf/dtoa/utils.h
+--- a/qtwebkit-opensource-src-5.212/Source/WTF/wtf/dtoa/utils.h	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Source/WTF/wtf/dtoa/utils.h	2020-04-13 22:51:51.000000000 +0000
+@@ -49,7 +49,7 @@
+ defined(__ARMEL__) || \
+ defined(_MIPS_ARCH_MIPS32R2)
+ #define DOUBLE_CONVERSION_CORRECT_DOUBLE_OPERATIONS 1
+-#elif CPU(MIPS) || CPU(MIPS64) || CPU(PPC) || CPU(PPC64) || CPU(PPC64LE) || CPU(SH4) || CPU(S390) || CPU(S390X) || CPU(IA64) || CPU(ALPHA) || CPU(ARM64) || CPU(HPPA) || CPU(RISCV64)
++#elif CPU(MIPS) || CPU(MIPS64) || CPU(PPC) || CPU(PPC64) || CPU(PPC64LE) || CPU(SH4) || CPU(S390) || CPU(S390X) || CPU(IA64) || CPU(ALPHA) || CPU(ARM64) || CPU(HPPA)
+ #define DOUBLE_CONVERSION_CORRECT_DOUBLE_OPERATIONS 1
+ #elif defined(_M_IX86) || defined(__i386__)
+ #if defined(_WIN32)
+diff -ru a/qtwebkit-opensource-src-5.212/Source/WebCore/css/makegrammar.pl b/qtwebkit-opensource-src-5.212/Source/WebCore/css/makegrammar.pl
+--- a/qtwebkit-opensource-src-5.212/Source/WebCore/css/makegrammar.pl	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Source/WebCore/css/makegrammar.pl	2020-04-13 22:51:51.000000000 +0000
+@@ -73,6 +73,25 @@
+ }
+ 
+ my $fileBase = File::Spec->join($outputDir, $filename);
+-my @bisonCommand = ($bison, "--defines=$fileBase.h", "-p", $symbolsPrefix, $grammarFilePath, "-o", "$fileBase.cpp");
++my @bisonCommand = ($bison, "-d", "-p", $symbolsPrefix, $grammarFilePath, "-o", "$fileBase.cpp");
+ push @bisonCommand, "--no-lines" if $^O eq "MSWin32"; # Work around bug in bison >= 3.0 on Windows where it puts backslashes into #line directives.
+ system(@bisonCommand) == 0 or die;
++
++open HEADER, ">$fileBase.h" or die;
++print HEADER << "EOF";
++#ifndef CSSGRAMMAR_H
++#define CSSGRAMMAR_H
++EOF
++
++open HPP, "<$fileBase.cpp.h" or open HPP, "<$fileBase.hpp" or die;
++while (<HPP>) {
++    print HEADER;
++}
++close HPP;
++
++print HEADER "#endif\n";
++close HEADER;
++
++unlink("$fileBase.cpp.h");
++unlink("$fileBase.hpp");
++
+diff -ru a/qtwebkit-opensource-src-5.212/Source/WebCore/platform/MIMETypeRegistry.cpp b/qtwebkit-opensource-src-5.212/Source/WebCore/platform/MIMETypeRegistry.cpp
+--- a/qtwebkit-opensource-src-5.212/Source/WebCore/platform/MIMETypeRegistry.cpp	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Source/WebCore/platform/MIMETypeRegistry.cpp	2020-04-13 22:51:51.000000000 +0000
+@@ -254,9 +254,6 @@
+     // Do not treat SVG as images directly because WebKit can handle them.
+     supportedImageMIMETypes->remove("image/svg+xml");
+     supportedImageResourceMIMETypes->remove("image/svg+xml");
+-    // Do not treat PDF as images
+-    supportedImageMIMETypes->remove("application/pdf");
+-    supportedImageResourceMIMETypes->remove("application/pdf");
+ #endif // PLATFORM(QT)
+ #endif // USE(CG)
+ }
+diff -ru a/qtwebkit-opensource-src-5.212/Source/WebCore/platform/network/qt/ResourceRequest.h b/qtwebkit-opensource-src-5.212/Source/WebCore/platform/network/qt/ResourceRequest.h
+--- a/qtwebkit-opensource-src-5.212/Source/WebCore/platform/network/qt/ResourceRequest.h	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Source/WebCore/platform/network/qt/ResourceRequest.h	2020-04-13 22:51:51.000000000 +0000
+@@ -32,7 +32,7 @@
+ // HTTP/2 is implemented since Qt 5.8, but various QtNetwork bugs make it unusable in browser with Qt < 5.10.1
+ // We also don't enable HTTP/2 for unencrypted connections because of possible compatibility issues; it can be
+ // enabled manually by user application via custom QNAM subclass
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 1) && !defined(QT_NO_SSL)
++#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 1)
+ #define USE_HTTP2 1
+ #endif
+ 
+diff -ru a/qtwebkit-opensource-src-5.212/Source/WebKit/PlatformQt.cmake b/qtwebkit-opensource-src-5.212/Source/WebKit/PlatformQt.cmake
+--- a/qtwebkit-opensource-src-5.212/Source/WebKit/PlatformQt.cmake	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Source/WebKit/PlatformQt.cmake	2020-04-13 22:51:51.000000000 +0000
+@@ -419,16 +419,6 @@
+ )
+ 
+ file(GLOB WebKit_PRIVATE_HEADERS qt/Api/*_p.h)
+-
+-# This is needed to install WK2 private headers into macOS bundle
+-if (ENABLE_WEBKIT2)
+-    file(GLOB WebKit2_PRIVATE_HEADERS "${WEBKIT2_DIR}/UIProcess/API/qt/*_p.h")
+-    foreach (_src ${WebKit2_PRIVATE_HEADERS})
+-        set_property(SOURCE ${_src} PROPERTY SKIP_AUTOMOC ON)
+-    endforeach ()
+-    list(APPEND WebKit_PRIVATE_HEADERS ${WebKit2_PRIVATE_HEADERS})
+-endif ()
+-
+ install(
+     FILES
+         ${WebKit_PRIVATE_HEADERS}
+diff -ru a/qtwebkit-opensource-src-5.212/Source/WebKit/qt/declarative/CMakeLists.txt b/qtwebkit-opensource-src-5.212/Source/WebKit/qt/declarative/CMakeLists.txt
+--- a/qtwebkit-opensource-src-5.212/Source/WebKit/qt/declarative/CMakeLists.txt	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Source/WebKit/qt/declarative/CMakeLists.txt	2020-04-13 22:51:51.000000000 +0000
+@@ -42,10 +42,6 @@
+     AUTOMOC ON
+ )
+ 
+-if (COMPILER_IS_GCC_OR_CLANG)
+-    target_compile_options(qmlwebkitplugin PRIVATE -frtti)
+-endif ()
+-
+ add_custom_target(
+     qmlwebkitplugin-files ALL
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different qmldir "${CMAKE_BINARY_DIR}/imports/QtWebKit/qmldir"
+diff -ru a/qtwebkit-opensource-src-5.212/Source/WebKit/qt/declarative/experimental/CMakeLists.txt b/qtwebkit-opensource-src-5.212/Source/WebKit/qt/declarative/experimental/CMakeLists.txt
+--- a/qtwebkit-opensource-src-5.212/Source/WebKit/qt/declarative/experimental/CMakeLists.txt	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Source/WebKit/qt/declarative/experimental/CMakeLists.txt	2020-04-13 22:51:51.000000000 +0000
+@@ -19,10 +19,6 @@
+     AUTOMOC ON
+ )
+ 
+-if (COMPILER_IS_GCC_OR_CLANG)
+-    target_compile_options(qmlwebkitexperimentalplugin PRIVATE -frtti)
+-endif ()
+-
+ add_custom_target(
+     qmlwebkitexperimentalplugin-files ALL
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different qmldir "${CMAKE_BINARY_DIR}/imports/QtWebKit/experimental/qmldir"
+diff -ru a/qtwebkit-opensource-src-5.212/Source/WebKit2/Platform/IPC/unix/ConnectionUnix.cpp b/qtwebkit-opensource-src-5.212/Source/WebKit2/Platform/IPC/unix/ConnectionUnix.cpp
+--- a/qtwebkit-opensource-src-5.212/Source/WebKit2/Platform/IPC/unix/ConnectionUnix.cpp	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Source/WebKit2/Platform/IPC/unix/ConnectionUnix.cpp	2020-04-13 22:51:51.000000000 +0000
+@@ -368,10 +368,6 @@
+ void Connection::readyReadHandler()
+ {
+ #if PLATFORM(QT)
+-    if (!m_socketNotifier) {
+-        WTFLogAlways("Error receiving IPC message on socket %d in process %d: m_socketNotifier is null", m_socketDescriptor, getpid());
+-        return;
+-    }
+     SocketNotifierResourceGuard socketNotifierEnabler(m_socketNotifier);
+ #endif
+ 
+diff -ru a/qtwebkit-opensource-src-5.212/Source/WebKit2/PlatformQt.cmake b/qtwebkit-opensource-src-5.212/Source/WebKit2/PlatformQt.cmake
+--- a/qtwebkit-opensource-src-5.212/Source/WebKit2/PlatformQt.cmake	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Source/WebKit2/PlatformQt.cmake	2020-04-13 22:51:51.000000000 +0000
+@@ -217,21 +217,6 @@
+     WebProcess/qt/WebProcessQt.cpp
+ )
+ 
+-if (COMPILER_IS_GCC_OR_CLANG)
+-    set_source_files_properties(
+-        UIProcess/API/qt/qquicknetworkreply.cpp
+-        UIProcess/API/qt/qquicknetworkrequest.cpp
+-        UIProcess/API/qt/qquickurlschemedelegate.cpp
+-        UIProcess/API/qt/qquickwebpage.cpp
+-        UIProcess/API/qt/qquickwebview.cpp
+-        UIProcess/API/qt/qwebiconimageprovider.cpp
+-
+-        UIProcess/Launcher/qt/ProcessLauncherQt.cpp
+-    PROPERTIES
+-        COMPILE_FLAGS -frtti
+-    )
+-endif ()
+-
+ qt5_add_resources(WebKit2_SOURCES
+     WebKit2.qrc
+ )
+diff -ru a/qtwebkit-opensource-src-5.212/Source/cmake/OptionsQt.cmake b/qtwebkit-opensource-src-5.212/Source/cmake/OptionsQt.cmake
+--- a/qtwebkit-opensource-src-5.212/Source/cmake/OptionsQt.cmake	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Source/cmake/OptionsQt.cmake	2020-04-13 22:51:51.000000000 +0000
+@@ -13,9 +13,6 @@
+ 
+ set(QT_CONAN_DIR "" CACHE PATH "Directory containing conanbuildinfo.cmake and conanfile.txt")
+ if (QT_CONAN_DIR)
+-    if (NOT QT_CONAN_FILE)
+-        set(QT_CONAN_FILE "${QT_CONAN_DIR}/conanfile.txt")
+-    endif ()
+     message(STATUS "Using conan directory: ${QT_CONAN_DIR}")
+     find_program(CONAN_COMMAND NAMES conan PATHS $ENV{PIP3_PATH})
+     if (NOT CONAN_COMMAND)
+@@ -34,7 +31,7 @@
+ 
+         message(STATUS \"Importing dependencies from conan to \${_conan_imports_dest}\")
+         execute_process(
+-            COMMAND \"${CONAN_COMMAND}\" imports --import-folder \${_conan_imports_dest} \"${QT_CONAN_FILE}\"
++            COMMAND \"${CONAN_COMMAND}\" imports --import-folder \${_conan_imports_dest} \"${QT_CONAN_DIR}/conanfile.txt\"
+             WORKING_DIRECTORY \"${QT_CONAN_DIR}\"
+             RESULT_VARIABLE _conan_imports_result
+         )
+@@ -172,10 +169,7 @@
+     endif ()
+ endmacro()
+ 
+-if (APPLE)
+-    set(CMAKE_MACOSX_RPATH ON)
+-    set(CMAKE_FIND_FRAMEWORK LAST)
+-endif ()
++set(CMAKE_MACOSX_RPATH ON)
+ 
+ add_definitions(-DBUILDING_QT__=1)
+ add_definitions(-DQT_NO_EXCEPTIONS)
+diff -ru a/qtwebkit-opensource-src-5.212/Source/cmake/WebKitCommon.cmake b/qtwebkit-opensource-src-5.212/Source/cmake/WebKitCommon.cmake
+--- a/qtwebkit-opensource-src-5.212/Source/cmake/WebKitCommon.cmake	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Source/cmake/WebKitCommon.cmake	2020-04-13 22:51:51.000000000 +0000
+@@ -24,11 +24,7 @@
+     # TODO Enforce version requirement for perl
+     find_package(Perl 5.10.0 REQUIRED)
+ 
+-    # Workaround for Windows Store python3.exe
+-    # Official Python packages for Windows don't have python3.exe, only python.exe
+-    if (NOT WIN32)
+-        set(Python_ADDITIONAL_VERSIONS 3)
+-    endif ()
++    set(Python_ADDITIONAL_VERSIONS 3)
+     find_package(PythonInterp 2.7.0 REQUIRED)
+ 
+     # We cannot check for RUBY_FOUND because it is set only when the full package is installed and
+diff -ru a/qtwebkit-opensource-src-5.212/Tools/QtTestBrowser/launcherwindow.cpp b/qtwebkit-opensource-src-5.212/Tools/QtTestBrowser/launcherwindow.cpp
+--- a/qtwebkit-opensource-src-5.212/Tools/QtTestBrowser/launcherwindow.cpp	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Tools/QtTestBrowser/launcherwindow.cpp	2020-04-13 22:51:51.000000000 +0000
+@@ -170,13 +170,11 @@
+     } else {
+         WebViewGraphicsBased* view = new WebViewGraphicsBased(splitter);
+         m_view = view;
+-#ifndef QT_NO_OPENGL
+         if (!m_windowOptions.useQOpenGLWidgetViewport)
+             toggleQGLWidgetViewport(m_windowOptions.useQGLWidgetViewport);
+ #ifdef QT_OPENGL_LIB
+         if (!m_windowOptions.useQGLWidgetViewport)
+             toggleQOpenGLWidgetViewport(m_windowOptions.useQOpenGLWidgetViewport);
+-#endif // QT_OPENGL_LIB
+ #endif
+         view->setPage(page());
+ 
+@@ -1359,5 +1357,3 @@
+         page()->findText(m_lineEdit->text(), QFlag(m_findFlag));
+ }
+ #endif
+-
+-#include "moc_launcherwindow.cpp"
+diff -ru a/qtwebkit-opensource-src-5.212/Tools/QtTestBrowser/useragentlist.txt b/qtwebkit-opensource-src-5.212/Tools/QtTestBrowser/useragentlist.txt
+--- a/qtwebkit-opensource-src-5.212/Tools/QtTestBrowser/useragentlist.txt	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Tools/QtTestBrowser/useragentlist.txt	2020-04-13 22:51:51.000000000 +0000
+@@ -1,17 +1,13 @@
+-Mozilla/5.0 (Android 7.1.1; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0
+-Mozilla/5.0 (Linux; Android 7.1.1; E6883) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Mobile Safari/537.36
+-Mozilla/5.0 (Linux; Android 9; G8441) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.111 Mobile Safari/537.36
+-Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Safari/605.1.15
++Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.1 (KHTML, like Gecko) QtTestBrowser/0.1 Safari/535.1
++Mozilla/5.0 (SymbianOS/9.4; U; Series60/5.0) AppleWebKit/535.1 (KHTML, like Gecko) QtTestBrowser/0.1 Mobile Safari/535.1
++Mozilla/5.0 (Macintosh; PPC Mac OS X) AppleWebKit/125.2 (KHTML, like Gecko) Safari/125.8
++Mozilla/5.0 (Unknown; like Android 2.2; Intel Mac OS X 10_6) AppleWebKit/533.3 (KHTML, like Gecko) Version/4.0.3 Mobile Safari/533.3
++Mozilla/5.0 (iPhone; CPU OS 3_2 like Mac OS X) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B334b Safari/531.21.10
++Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_0 like Mac OS X; en-us) AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7
++Mozilla/5.0 (iPad; U; CPU OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B334b Safari/531.21.10
++Opera/9.80 (Windows NT 6.0; U; en) Presto/2.8.99 Version/11.10
+ Mozilla/5.0 (SymbianOS/9.4; U; Series60/5.0 Nokia5800d-1b/20.2.014; Profile/MIDP-2.1 Configuration/CLDC-1.1) AppleWebKit/413 (KHTML, like Gecko) Safari/413
+-Mozilla/5.0 (Windows NT 10.0; Trident/7.0; rv:11.0
+-Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36 Edge/18.18363
+-Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36
+-Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) QtWebEngine/5.12.8 Chrome/69.0.3497.128 Safari/537.36
+-Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/602.1 (KHTML, like Gecko) QtTestBrowser/0.1 Version/10.0 Safari/602.1
+-Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Safari/605.1.15 Epiphany/605.1.15
+-Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0
+-Mozilla/5.0 (X11; Linux x86_64; rv:80.0) Gecko/20100101 Firefox/80.0
+-Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1 Mobile/15E148 Safari/604.1
+-Mozilla/5.0 (iPhone; CPU iPhone OS 13_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Mobile/15E148 Safari/604.1
+-Opera/9.80 (Windows NT 6.1) Presto/2.12.388 Version/12.18
+-Opera/9.80 (X11; Linux x86_64) Presto/2.12.388 Version/12.16
++Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.2; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0)
++Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
++Mozilla/5.0 (Windows; Windows NT 5.1) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.68 Safari/534.24
++Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20100101 Firefox/4.0.1
+diff -ru a/qtwebkit-opensource-src-5.212/Tools/qmake/projects/generate_forwarding_pris.pro b/qtwebkit-opensource-src-5.212/Tools/qmake/projects/generate_forwarding_pris.pro
+--- a/qtwebkit-opensource-src-5.212/Tools/qmake/projects/generate_forwarding_pris.pro	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Tools/qmake/projects/generate_forwarding_pris.pro	2020-04-13 22:51:51.000000000 +0000
+@@ -26,28 +26,12 @@
+     write_file($$forwarding_pri_name, FORWARDING_PRI_CONTENTS)|error()
+ }
+ 
+-defineTest(writeWebKitPrivateForwardingPri) {
+-    module = webkit_private
+-    configuration = $$1
+-    cmake_build_dir = $$ROOT_BUILD_DIR/$$configuration
+-    forwarding_pri_name = $$MODULE_QMAKE_OUTDIR/mkspecs/modules/qt_lib_$${module}.pri
+-
+-    FORWARDING_PRI_CONTENTS += \
+-        "include($$cmake_build_dir/Source/WebKit/qt_lib_$${module}.pri)" \
+-        "QT.$${module}.priority = 1" \
+-        "QT.$${module}.includes = $$cmake_build_dir/DerivedSources/ForwardingHeaders/QtWebKit $$ROOT_WEBKIT_DIR/Source"
+-
+-    message("Writing $$forwarding_pri_name")
+-    write_file($$forwarding_pri_name, FORWARDING_PRI_CONTENTS)|error()
+-}
+-
+ 
+ debug_and_release {
+     !build_pass {
+         # Use release build in case of debug_and_release
+         writeForwardingPri(webkit, release)
+         writeForwardingPri(webkitwidgets, release)
+-        writeWebKitPrivateForwardingPri(release)
+     }
+ } else {
+     CONFIG(debug, debug|release) {
+@@ -57,5 +41,4 @@
+     }
+     writeForwardingPri(webkit, $$configuration)
+     writeForwardingPri(webkitwidgets, $$configuration)
+-    writeWebKitPrivateForwardingPri($$configuration)
+ }
+Only in a/qtwebkit-opensource-src-5.212/Tools/qt: QtBinaryChecklist.txt
+diff -ru a/qtwebkit-opensource-src-5.212/Tools/qt/build-qtwebkit-conan.py b/qtwebkit-opensource-src-5.212/Tools/qt/build-qtwebkit-conan.py
+--- a/qtwebkit-opensource-src-5.212/Tools/qt/build-qtwebkit-conan.py	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Tools/qt/build-qtwebkit-conan.py	2020-04-13 22:51:51.000000000 +0000
+@@ -28,77 +28,47 @@
+ import pathlib
+ import platform
+ import sys
+-import subprocess
+ 
+ 
+-def run_command(command):
+-    print("Executing:", command)
+-    exit_code = os.system(command)
+-    print("Exit code:", exit_code)
+-    if exit_code:
+-        sys.exit(1)
++def parse_qt(qt):
++    if qt:
++        os.environ['QTDIR'] = qt
+ 
+ 
+-class ConanProfile:
+-    def __init__(self, profile_name):
+-        self.name = profile_name
++def parse_cmake(cmake):
++    if cmake:
++        os.environ["CMAKEFLAGS"] = cmake
+ 
+-    def create(self):
+-        run_command("conan profile new {0} --detect --force".format(self.name))
+ 
+-    def get_arch(self):
+-        return subprocess.check_output("conan profile get settings.arch_build {0}".format(self.name), shell=True).rstrip().decode('ascii')
++def parse_ninja(ninja):
++    if ninja:
++        os.environ["NINJAFLAGS"] = ninja
+ 
+-    def update(self, setting, value):
+-        run_command("conan profile update settings.{0}={1} {2}".format(setting, value, self.name))
+ 
+-
+-def set_compiler_environment(cc, cxx):
+-    os.environ["CC"] = cc
+-    os.environ["CXX"] = cxx
+-
+-
+-def create_profile(compiler, arch):
+-    compiler_preset = {
+-        "msvc": ["cl", "cl"],
+-        "clang": ["clang", "clang++"],
+-        "gcc": ["gcc", "g++"]
+-    }
+-    if not compiler:
++def parse_compiler(compiler):
++    if not compiler and not ("CC" in os.environ and "CXX" in os.environ):
+         if platform.system() == "Windows":
+             compiler = "msvc"
+         elif platform.system() == "Darwin":
+             compiler = "clang"
+-        elif platform.system() == "Linux":
+-            compiler = "gcc"
+-
+-    if not compiler in compiler_preset:
+-        sys.exit("Error: Unknown Compiler " + compiler + " specified")
+-
+-    cc, cxx = compiler_preset[compiler]
+-    profile = ConanProfile('qtwebkit_{0}_{1}'.format(compiler, arch))  # e.g. qtwebkit_msvc_x86
+ 
+     if compiler == "msvc":
+-        profile.create()
+-        set_compiler_environment(cc, cxx)
+-    else:
+-        set_compiler_environment(cc, cxx)
+-        profile.create()
+-
+-    if arch == 'default':
+-        arch = profile.get_arch()
+-
+-    profile.update('arch', arch)
+-    profile.update('arch_build', arch)
+-
+-    if platform.system() == "Windows" and compiler == "gcc":
+-        profile.update('compiler.threads', 'posix')
+-        if arch == 'x86':
+-            profile.update('compiler.exception', 'dwarf2')
+-        if arch == 'x86_64':
+-            profile.update('compiler.exception', 'seh')
++        os.environ["CC"] = "cl"
++        os.environ["CXX"] = "cl"
++    elif compiler == "clang":
++        os.environ["CC"] = "clang"
++        os.environ["CXX"] = "clang++"
++    elif compiler == "gcc":
++        os.environ["CC"] = "gcc"
++        os.environ["CXX"] = "g++"
++
+ 
+-    return profile.name
++def run_command(command):
++    print("Executing:", command)
++    exit_code = os.system(command)
++    print("Exit code:", exit_code)
++    if exit_code:
++        sys.exit(1)
+ 
+ 
+ parser = argparse.ArgumentParser(description='Build QtWebKit with Conan. For installation of build product into Qt, use --install option')
+@@ -110,20 +80,13 @@
+                     default="", type=str)
+ parser.add_argument(
+     "--build_directory", help="Name of build dirtectory (defaults to build)", default="build", type=str)
+-parser.add_argument("--compiler", help="Specify compiler for build (msvc, gcc, clang)", default=None, choices=['gcc', 'msvc', 'clang'], type=str)
++parser.add_argument("--compiler", help="Specify compiler for build (msvc, gcc, clang)", type=str)
+ parser.add_argument("--configure", help="Execute the configuration step. When specified, build won't run unless --build is specified", action="store_true")
+ parser.add_argument("--build", help="Execute the build step. When specified, configure won't run unless --configure is specified", action="store_true")
+ parser.add_argument("--install", help="Execute the install step. When specified, configure and build steps WILL run without changes", action="store_true")
+-parser.add_argument("--profile", help="Name of conan profile provided by user. Note: compiler and profile options are mutually exclusive", type=str)
+-parser.add_argument("--arch", help="32 bit or 64 bit build, leave blank for autodetect", default="default", choices=['x86', 'x86_64'])
+-parser.add_argument("--build_type", help="Name of CMake build configuration to use", default="Release", choices=['', 'Release', 'Debug'])
+-parser.add_argument("--install_prefix", help="Set installation prefix to the given path (defaults to Qt directory)", default=None)
+ 
+ args = parser.parse_args()
+ 
+-# Always print commands run by conan internally
+-os.environ["CONAN_PRINT_RUN_COMMANDS"] = "1"
+-
+ src_directory = str(pathlib.Path(__file__).resolve().parents[2])
+ 
+ if os.path.isabs(args.build_directory):
+@@ -138,35 +101,22 @@
+ run_command("conan remote add -f bincrafters https://api.bintray.com/conan/bincrafters/public-conan")
+ run_command("conan remote add -f qtproject https://api.bintray.com/conan/qtproject/conan")
+ 
+-if args.profile and args.compiler:
+-    sys.exit("Error: --compiler and --profile cannot be specified at the same time")
+-
+-if not args.profile:
+-    profile_name = create_profile(args.compiler, args.arch)
+-else:
+-    profile_name = args.profile
+-
+-build_vars = f'-o qt="{args.qt}" -o cmakeargs="{args.cmakeargs}" \
+--o build_type="{args.build_type}" '
+-
+-if args.install_prefix:
+-    build_vars += ' -o install_prefix="{}"'.format(args.install_prefix)
+-elif args.qt:
+-    build_vars += ' -o install_prefix="{}"'.format(args.qt)
++script = 'conan install {0} -if "{1}" --build=missing'.format(conanfile_path, build_directory)
++run_command(script)
+ 
+-if args.ninjaargs:
+-    os.environ["NINJAFLAGS"] = args.ninjaargs
++parse_qt(args.qt)
++parse_cmake(args.cmakeargs)
++parse_ninja(args.ninjaargs)
++parse_compiler(args.compiler)
+ 
+ if not args.configure and not args.build:
+     # If we have neither --configure nor --build, we should do both configure and build (but install only if requested)
+     args.configure = True
+     args.build = True
+ 
+-if args.configure:
+-    run_command('conan install {0} -if "{1}" --build=missing --profile={2} {3}'.format(conanfile_path, build_directory, profile_name, build_vars))
+-
+ configure_flag = "--configure" if args.configure else ""
+ build_flag = "--build" if args.build else ""
+ install_flag = "--install" if args.install else ""
+ 
+-run_command('conan build {0} {1} {2} -sf "{3}" -bf "{4}" "{5}"'.format(configure_flag, build_flag, install_flag, src_directory, build_directory, conanfile_path))
++script = 'conan build {0} {1} {2} -sf "{3}" -bf "{4}" "{5}"'.format(configure_flag, build_flag, install_flag, src_directory, build_directory, conanfile_path)
++run_command(script)
+diff -ru a/qtwebkit-opensource-src-5.212/Tools/qt/conanfile.py b/qtwebkit-opensource-src-5.212/Tools/qt/conanfile.py
+--- a/qtwebkit-opensource-src-5.212/Tools/qt/conanfile.py	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Tools/qt/conanfile.py	2020-04-13 22:51:51.000000000 +0000
+@@ -31,19 +31,16 @@
+     url = "https://github.com/qtwebkit/qtwebkit"
+     description = "Qt port of WebKit"
+     topics = ("qt", "browser-engine", "webkit", "qt5", "qml", "qtwebkit")
+-    settings = "os", "compiler", "arch", "arch_build"
++    settings = "os", "compiler", "build_type", "arch"
+     generators = "cmake", "virtualenv", "txt"
+     exports_sources = "../../*"
+     no_copy_source = True
+-    options = {
+-        "qt": "ANY",
+-        "cmakeargs": "ANY",
+-        "build_type": "ANY",
+-        "install_prefix": "ANY"
+-    }
++    requires = (
++        "libjpeg-turbo/2.0.3@qtproject/stable",
++        "libpng/1.6.37",
++        "libwebp/1.1.0"
++    )
+     default_options = {
+-        "install_prefix": None,
+-
+         "icu:shared": True,
+         "icu:data_packaging": "library",
+ 
+@@ -67,11 +64,11 @@
+                 self.build_requires(
+                     'pkg-config_installer/0.29.2@bincrafters/stable')
+ 
+-        if self.settings.os == 'Windows': # TODO: Fix msys perl or at least allow using non-msys one from PATH
+-            self.build_requires("strawberryperl/5.30.0.1")
+-
++        # gperf python perl bison ruby flex
+         if not tools.which("gperf"):
+             self.build_requires("gperf_installer/3.1@conan/stable")
++        if not tools.which("perl"):
++            self.build_requires("strawberryperl/5.30.0.1")
+         if not tools.which("ruby"):
+             self.build_requires("ruby_installer/2.6.3@bincrafters/stable")
+         if not tools.which("bison"):
+@@ -79,53 +76,38 @@
+         if not tools.which("flex"):
+             self.build_requires("flex_installer/2.6.4@bincrafters/stable")
+         if not tools.which("ninja"):
+-            self.build_requires("ninja/[>=1.9.0]")
++            self.build_requires("ninja/1.9.0")
+         if not tools.which("cmake"):
+-            self.build_requires("cmake/[>=3.18.2]")
++            self.build_requires("cmake/3.16.4")
+ 
+     def requirements(self):
+         # TODO: Handle case when custom ICU is needed (AppStore etc., MACOS_USE_SYSTEM_ICU=OFF in CMake)
+-        if self.settings.os == 'Windows':
++        if self.settings.os != 'Macos':
+             self.requires("icu/65.1@qtproject/stable")
+             self.requires("libxml2/2.9.10@qtproject/stable")
+             self.requires("libxslt/1.1.34@qtproject/stable")
+             self.requires("zlib/1.2.11")
+-
+-        if self.settings.os == 'Windows' or self.settings.os == 'Macos':
+-            # FIXME: Pass Qt version, handle more versions
+-            qt_version = "5.15.1"
+-            if qt_version == "5.14.1":
+-                self.requires("sqlite3/3.30.1")
+-                self.requires("libjpeg-turbo/2.0.3@qtproject/stable")
+-                self.requires("libpng/1.6.37")
+-            if qt_version == "5.15.1":
+-                self.requires("sqlite3/3.32.3")
+-                self.requires("libjpeg-turbo/2.0.5@qtproject/stable")
+-                self.requires("libpng/1.6.37")
+-
+-            self.requires("libwebp/1.1.0")
++            self.requires("sqlite3/3.31.1")
+ 
+     def build(self):
+         cmake = CMake(self, set_cmake_flags=True)
+         cmake.generator = "Ninja"
+         cmake.verbose = False
+         cmake.definitions["QT_CONAN_DIR"] = self.build_folder
+-        cmake.definitions["QT_CONAN_FILE"] = __file__
++        # QtWebKit installation requires conanfile.txt in build directory
++        self.write_imports()
+ 
+         # if self.options.use_ccache:
+         #    cmake.definitions["CMAKE_C_COMPILER_LAUNCHER"] = "ccache"
+         #    cmake.definitions["CMAKE_CXX_COMPILER_LAUNCHER"] = "ccache"
+ 
+-        if self.options.qt:
++        if "QTDIR" in os.environ:
+             cmake.definitions["Qt5_DIR"] = os.path.join(
+-                str(self.options.qt), "lib", "cmake", "Qt5")
++                os.environ["QTDIR"], "lib", "cmake", "Qt5")
+             print("Qt5 directory:" + cmake.definitions["Qt5_DIR"])
+ 
+-        if self.options.build_type:
+-            cmake.build_type = str(self.options.build_type)
+-
+-        if self.options.cmakeargs:
+-            cmake_flags = shlex.split(str(self.options.cmakeargs))
++        if "CMAKEFLAGS" in os.environ:
++            cmake_flags = shlex.split(os.environ["CMAKEFLAGS"])
+         else:
+             cmake_flags = None
+ 
+@@ -140,11 +122,6 @@
+         else:
+             ninja_flags = None
+ 
+-        if self.options.install_prefix:
+-            cmake.definitions["CMAKE_INSTALL_PREFIX"] = str(self.options.install_prefix)
+-        else:
+-            del cmake.definitions["CMAKE_INSTALL_PREFIX"]
+-
+         print(self.source_folder)
+         print()
+         print(self.build_folder)
+@@ -153,6 +130,25 @@
+         cmake.build(args=ninja_flags)
+         cmake.install()
+ 
++    # QtWebKit installation requires conanfile.txt in build directory, so we generate it here
++    # Should be kept in sync with imports()
++    def write_imports(self):
++        conanfile = open(os.path.join(self.build_folder, "conanfile.txt"), "w")
++        conanfile.write("[imports]\n")
++
++        if self.settings.os == 'Windows':
++            conanfile.write("bin, icudt65.dll -> ./bin\n")
++            conanfile.write("bin, icuin65.dll -> ./bin\n")
++            conanfile.write("bin, icuuc65.dll -> ./bin\n")
++            # Visual Studio
++            conanfile.write("bin, libxml2.dll -> ./bin\n")
++            conanfile.write("bin, libxslt.dll -> ./bin\n")
++            # MinGW
++            conanfile.write("bin, libxml2-2.dll -> ./bin\n")
++            conanfile.write("bin, libxslt-1.dll -> ./bin\n")
++
++        conanfile.close()
++
+     def imports(self):
+         if self.settings.os == 'Windows':
+             self.copy("icudt65.dll", "./bin", "bin")
+@@ -163,7 +159,7 @@
+             self.copy("libxslt.dll", "./bin", "bin")
+             # MinGW
+             self.copy("libxml2-2.dll", "./bin", "bin")
+-            self.copy("libxslt-1.dll", "./bin", "bin")
++            self.copy("libxml2-2.dll", "./bin", "bin")
+ 
+     def package(self):
+         pass
+Only in a/qtwebkit-opensource-src-5.212/Tools/qt: installed-files-checker.py
+diff -ru a/qtwebkit-opensource-src-5.212/Tools/qt/jhbuild.modules b/qtwebkit-opensource-src-5.212/Tools/qt/jhbuild.modules
+--- a/qtwebkit-opensource-src-5.212/Tools/qt/jhbuild.modules	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Tools/qt/jhbuild.modules	2020-04-13 22:51:51.000000000 +0000
+@@ -91,7 +91,6 @@
+   <autotools id="glib"
+              autogen-sh="configure"
+              autogenargs="--disable-dtrace --disable-gtk-doc-html">
+-    <makeargs value="CFLAGS+=-Wno-error"/>
+     <branch module="/pub/GNOME/sources/glib/2.44/glib-2.44.1.tar.xz" version="2.44.1"
+             repo="ftp.gnome.org"
+             hash="sha256:8811deacaf8a503d0a9b701777ea079ca6a4277be10e3d730d2112735d5eca07">
+Only in a/qtwebkit-opensource-src-5.212/Tools/qt: license_writer.sh
+Only in a/qtwebkit-opensource-src-5.212/Tools/qt: qt-downloader
+Only in a/qtwebkit-opensource-src-5.212/Tools/qt: qt-downloader-requirements.txt
+diff -ru a/qtwebkit-opensource-src-5.212/Tools/qt/setup-qt5-submodules-for-coin.sh b/qtwebkit-opensource-src-5.212/Tools/qt/setup-qt5-submodules-for-coin.sh
+--- a/qtwebkit-opensource-src-5.212/Tools/qt/setup-qt5-submodules-for-coin.sh	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/Tools/qt/setup-qt5-submodules-for-coin.sh	2020-04-13 22:51:51.000000000 +0000
+@@ -22,20 +22,6 @@
+ # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ # THE POSSIBILITY OF SUCH DAMAGE.
+ 
+-usage() {
+-    echo "Usage: $0 <qt_ref>"
+-    echo "    where qt_ref is tag or other git reference from qt5.git repo to take submodules from"
+-    exit 0
+-}
+-
+-if [ -z "$1" ]; then
+-    usage
+-fi
+-
+-if [ "$1" = "--help" ]; then
+-    usage
+-fi
+-
+ QT_REF="$1"
+ SCRIPTNAME=$(basename "$0")
+ 
+Only in a/qtwebkit-opensource-src-5.212: include
+Only in a/qtwebkit-opensource-src-5.212/tests/webkitqml/qmltests/DesktopBehavior: DesktopBehavior.pro
+Only in b/qtwebkit-opensource-src-5.212/tests/webkitqml/qmltests: DesktopBehavior.pro
+Only in a/qtwebkit-opensource-src-5.212/tests/webkitqml/qmltests/WebView: BLACKLIST
+Only in a/qtwebkit-opensource-src-5.212/tests/webkitqml/qmltests/WebView: WebView.pro
+Only in b/qtwebkit-opensource-src-5.212/tests/webkitqml/qmltests: WebView.pro
+diff -ru a/qtwebkit-opensource-src-5.212/tests/webkitqml/qmltests/qmltests.pro b/qtwebkit-opensource-src-5.212/tests/webkitqml/qmltests/qmltests.pro
+--- a/qtwebkit-opensource-src-5.212/tests/webkitqml/qmltests/qmltests.pro	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/tests/webkitqml/qmltests/qmltests.pro	2020-04-13 22:51:51.000000000 +0000
+@@ -1,3 +1,3 @@
+ TEMPLATE = subdirs
+ 
+-SUBDIRS += DesktopBehavior WebView
++SUBDIRS += DesktopBehavior.pro WebView.pro
+diff -ru a/qtwebkit-opensource-src-5.212/tests/webkitqml/tests.pri b/qtwebkit-opensource-src-5.212/tests/webkitqml/tests.pri
+--- a/qtwebkit-opensource-src-5.212/tests/webkitqml/tests.pri	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/tests/webkitqml/tests.pri	2020-04-13 22:51:51.000000000 +0000
+@@ -4,16 +4,16 @@
+ TARGET = tst_$$TARGET
+ 
+ INCLUDEPATH += $$PWD
+-SOURCES +=  $$PWD/util.cpp
++SOURCES +=  ../util.cpp
+ 
+ QT += testlib webkit
+ 
+ qtHaveModule(quick) {
+     QT += qml quick quick-private
+-    HEADERS += $$PWD/bytearraytestdata.h \
+-               $$PWD/util.h
++    HEADERS += ../bytearraytestdata.h \
++               ../util.h
+ 
+-    SOURCES += $$PWD/bytearraytestdata.cpp
++    SOURCES += ../bytearraytestdata.cpp
+ }
+ WEBKIT += wtf # For platform macros
+ 
+diff -ru a/qtwebkit-opensource-src-5.212/tests/webkitqml/webkitqml.pro b/qtwebkit-opensource-src-5.212/tests/webkitqml/webkitqml.pro
+--- a/qtwebkit-opensource-src-5.212/tests/webkitqml/webkitqml.pro	2020-09-22 11:30:04.000000000 +0000
++++ b/qtwebkit-opensource-src-5.212/tests/webkitqml/webkitqml.pro	2020-04-13 22:51:51.000000000 +0000
+@@ -1,2 +1,2 @@
+ TEMPLATE = subdirs
+-SUBDIRS += qmltests
++# SUBDIRS += qmltests
