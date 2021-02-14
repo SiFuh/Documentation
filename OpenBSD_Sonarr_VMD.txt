@@ -42,26 +42,11 @@ apk add unrar p7zip par2cmdline screen
 
 apk add mono libmediainfo
 
-vi /home/sonarr/launch-sonarr.sh
-
-  #!/bin/sh
-
-  /usr/bin/mono --debug /home/sonarr/Sonarr/Sonarr.exe
-
-chmod +x /home/sonarr/launch-sonarr.sh
-
 ------------------------------------------------------------------------------------
 
 # qBittorrent-nox
 
 apk add qbittorrent-nox
-
-vi /home/sonarr/launch-qbittorrent-nox.sh
-  #!/bin/sh
-
-  /usr/bin/qbittorrent-nox 
-
-chmod +x /home/sonarr/launch-qbittorrent-nox.sh
 
 ------------------------------------------------------------------------------------
 
@@ -74,13 +59,6 @@ pipupgrade --verbose --latest --yes
 
 # requirements.txt is from SABnzbd
 python3 -m pip install -r requirements.txt -U
-
-vi /home/sonarr/launch-launch-sabnzbd.sh
-  #!/bin/sh
-
-  /home/sonarr/SABnzbd-3.1.1/SABnzbd.py 
-
-chmod +x /home/sonarr/launch-sabnzbd.sh
 
 ------------------------------------------------------------------------------------
 
@@ -96,11 +74,11 @@ vi /home/sonarr/screen-sonarr
 
 # Only add the lines you wish to use
 
-  screen -t qBittorrent 2 sh /home/sonarr/launch-qbittorrent-nox.sh
-  screen -t SABnzbd 1 sh /home/sonarr/launch-sabnzbd.sh
-  screen -t Sonarr 0 sh /home/sonarr/launch-sonarr.sh
+  screen -t qBittorrent 2 /usr/bin/qbittorrent-nox 
+  screen -t SABnzbd 1 /home/sonarr/SABnzbd-3.1.1/SABnzbd.py 
+  screen -t Sonarr 0 /usr/bin/mono --debug /home/sonarr/Sonarr/Sonarr.exe
 
-# Screen needs a term setting it can use
+# Screen needs a term setting that it can use
 
 vi /etc/profile
   TERM=linux 
@@ -121,7 +99,7 @@ vi /etc/fstab
 
 # Create an SSH key for passwordless mounting
 
-ssh-keygen  -b 8192 -a 777 -C sonarr@sonarr.cc
+ssh-keygen  -t rsa -C sonarr@sonarr.cc
 cat ~/.ssh/id_rsa.pub | ssh <USERNAME>@<IPADDRESS> 'cat >> .ssh/authorized_keys'
 
 ------------------------------------------------------------------------------------
@@ -139,7 +117,7 @@ rc-update add local default
 
 # Change ownership of everything to the correct user
 
-chown sonarr:sonarr /home/sonarr/*
+chown -R sonarr:sonarr /home/sonarr/*
 
 # Don't need a history
 
