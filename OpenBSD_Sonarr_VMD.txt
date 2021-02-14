@@ -96,8 +96,8 @@ vi /home/sonarr/screen-sonarr
 
 # Only add the lines you wish to use
 
-  screen -t Sonarr 2 sh /home/sonarr/launch-qbittorrent-nox.sh
-  screen -t Sonarr 1 sh /home/sonarr/launch-sabnzbd.sh
+  screen -t qBittorrent 2 sh /home/sonarr/launch-qbittorrent-nox.sh
+  screen -t SABnzbd 1 sh /home/sonarr/launch-sabnzbd.sh
   screen -t Sonarr 0 sh /home/sonarr/launch-sonarr.sh
 
 # Screen needs a term setting it can use
