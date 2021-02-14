@@ -1,0 +1,187 @@
+# Creating the VMD
+
+vmctl create -s 2G Sonarr.qcow2
+
+doas vmctl start -m 500M -L -i 1 -r alpine-virt-3.13.1-x86_64.iso -d Sonarr.qcow2 Sonarr
+
+vmctl show
+
+doas vmctl console Sonarr
+
+------------------------------------------------------------------------------------
+
+# Install Alpine Linux
+
+root sonarr
+
+eth0
+100.64.1.3
+255.255.255.254
+Gateway 100.64.1.2
+DNS 100.64.1.2 
+
+sonarr@sonarr.cc
+
+sys
+
+vi /etc/apk/repositories
+vi /etc/motd
+
+# GID and UID should be the same as the user on the host system
+addgroup -g <GID> sonarr
+adduser -G sonarr -u <UID> sonarr
+
+apk update
+
+# Needed packages
+apk add unrar p7zip par2cmdline screen
+
+------------------------------------------------------------------------------------
+
+# Sonarr
+
+apk add mono libmediainfo
+
+vi /home/sonarr/launch-sonarr.sh
+
+  #!/bin/sh
+
+  /usr/bin/mono --debug /home/sonarr/Sonarr/Sonarr.exe
+
+chmod +x /home/sonarr/launch-sonarr.sh
+
+------------------------------------------------------------------------------------
+
+# qBittorrent-nox
+
+apk add qbittorrent-nox
+
+vi /home/sonarr/launch-qbittorrent-nox.sh
+  #!/bin/sh
+
+  /usr/bin/qbittorrent-nox 
+
+chmod +x /home/sonarr/launch-qbittorrent-nox.sh
+
+------------------------------------------------------------------------------------
+
+# SABnzbd
+
+apk add musl-dev openssl-dev gcc py3-pip python3-dev libffi-dev py3-wheel rust cargo
+
+pip install pipupgrade
+pipupgrade --verbose --latest --yes
+
+# requirements.txt is from SABnzbd
+python3 -m pip install -r requirements.txt -U
+
+vi /home/sonarr/launch-launch-sabnzbd.sh
+  #!/bin/sh
+
+  /home/sonarr/SABnzbd-3.1.1/SABnzbd.py 
+
+chmod +x /home/sonarr/launch-sabnzbd.sh
+
+------------------------------------------------------------------------------------
+
+# Configure screen
+
+vi /home/sonarr/screen-sonarr
+  startup_message off
+  vbell off
+  hardstatus on
+  hardstatus alwayslastline
+
+  sessionname Sonarr
+
+# Only add the lines you wish to use
+
+  screen -t Sonarr 2 sh /home/sonarr/launch-qbittorrent-nox.sh
+  screen -t Sonarr 1 sh /home/sonarr/launch-sabnzbd.sh
+  screen -t Sonarr 0 sh /home/sonarr/launch-sonarr.sh
+
+# Screen needs a term setting it can use
+
+vi /etc/profile
+  TERM=linux 
+
+------------------------------------------------------------------------------------
+
+# SSHFS
+
+apk add sshfs
+
+echo "fuse" >> /etc/modules
+modprobe fuse
+
+mkdir /home/sonarr/TV_Series
+
+vi /etc/fstab
+  <USER>@<IPADDRESS>:/home/<USER>/TV_Series /home/sonarr/TV_Series fuse.sshfs allow_other,default_permissions 0 0
+
+# Create an SSH key for passwordless mounting
+
+ssh-keygen  -b 8192 -a 777 -C sonarr@sonarr.cc
+cat ~/.ssh/id_rsa.pub | ssh <USERNAME>@<IPADDRESS> 'cat >> .ssh/authorized_keys'
+
+------------------------------------------------------------------------------------
+
+# Setup Sonarr, SABnzdb and qBittorrent to launch when the VM starts up
+
+vi /etc/local.d/sonarr.start
+  su sonarr -c 'screen -d -m -c /home/sonarr/screen-sonarr' > /dev/null 2>&1
+
+chmod +x /etc/local.d/sonarr.start
+
+rc-update add local default
+
+------------------------------------------------------------------------------------
+
+# Change ownership of everything to the correct user
+
+chown sonarr:sonarr /home/sonarr/*
+
+# Don't need a history
+
+rm .ash_history &&  ln -s /dev/null .ash_history
+
+# Create the Downloads folder in case it doesn't exist
+
+mkdir /home/Sonarr/Downloads
+
+------------------------------------------------------------------------------------
+
+# Exit the VM
+
+halt
+
+------------------------------------------------------------------------------------
+
+# Configure network access
+
+vi /etc/pf.conf 
+  match out on egress from 100.64.0.0/10 to any nat-to (egress)
+  pass in proto { udp tcp } from 100.64.0.0/10 to any port 53 rdr-to 127.0.0.1 port 5
+
+sysctl net.inet.ip.forwarding=1
+
+vi /etc/sysctl.conf
+  net.inet.ip.forwarding=1
+
+------------------------------------------------------------------------------------
+
+# Configure the OpenBSD host machine to run the VM as a daemon and as the correct
+# user
+
+vi /etc/vm.conf
+vm "Sonarr" {
+        enable
+        owner <USER>:<GROUP>
+        memory 500M
+        disk "/home/<USER>/Virtual/Sonarr.qcow2" format qcow2
+        local interface
+}
+
+doas vmctl restart Sonarr
+
+------------------------------------------------------------------------------------
