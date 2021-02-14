@@ -12,17 +12,26 @@ doas vmctl console Sonarr
 
 # Install Alpine Linux
 
-root sonarr
+USER root PASS sonarr
 
+# Static or DHCP
 eth0
-100.64.1.3
-255.255.255.254
-Gateway 100.64.1.2
-DNS 100.64.1.2 
+IP ADDRESS 100.64.1.3
+NETMASK    255.255.255.254
+GATEWAY    100.64.1.2
+DNS        100.64.1.2 
 
-sonarr@sonarr.cc
+HOSTNAME & DOMAINNAME = sonarr@sonarr.cc
 
-sys
+DISK = sys
+
+halt
+
+------------------------------------------------------------------------------------
+
+# Configure the system
+
+doas vmctl start -m 500M -L -i 1 -d Sonarr.qcow2 Sonarr
 
 vi /etc/apk/repositories
 vi /etc/motd
